@@ -1,7 +1,7 @@
 // server.js - COMPLETE VERSION FOR RENDER
 require('dotenv').config();
 const express = require('express');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const session = require('express-session');
 const { Pool } = require('pg');
 const multer = require('multer');
