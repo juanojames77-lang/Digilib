@@ -1,3 +1,4 @@
+// server.js - UPDATED FOR RENDER DEPLOYMENT
 require('dotenv').config();
 const express = require('express');
 const bcrypt = require('bcrypt');
@@ -12,20 +13,24 @@ const fs = require('fs');
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000; // ✅ CHANGED FOR RENDER
 
 /* ================= CONFIG ================= */
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json()); // <-- for AJAX JSON
+app.use(express.json());
 app.use(express.static('public'));
 
 /* ================= SESSION ================= */
 app.use(session({
-  secret: 'super-secret-key',
+  secret: process.env.SESSION_SECRET || 'super-secret-key-change-this', // ✅ CHANGED
   resave: false,
   saveUninitialized: false,
-  cookie: { httpOnly: true }
+  cookie: { 
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // ✅ ADDED FOR RENDER
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
 }));
 
 /* ================= NO-CACHE ================= */
@@ -37,10 +42,10 @@ app.use((req, res, next) => {
 });
 
 /* ================= DATABASE ================= */
+// ✅ UPDATED FOR RENDER POSTGRESQL
 const pool = new Pool({
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
 /* ================= CLOUDINARY ================= */
@@ -49,8 +54,20 @@ cloudinary.config({
   api_key: process.env.CLOUD_KEY,
   api_secret: process.env.CLOUD_SECRET
 });
-const storage = new CloudinaryStorage({ cloudinary, params:{ folder:'theses', resource_type:'raw' } });
-const upload = multer({ storage });
+
+const storage = new CloudinaryStorage({ 
+  cloudinary, 
+  params: { 
+    folder: 'theses', 
+    resource_type: 'raw',
+    allowed_formats: ['pdf']
+  } 
+});
+
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
 
 /* ================= MIDDLEWARE ================= */
 const requireLogin = (req, res, next) => {
@@ -62,12 +79,19 @@ const requireLogin = (req, res, next) => {
 
 const isAdmin = (req, res, next) => {
   if (!req.session.user || req.session.role !== 'admin') {
-    // 🔥 DO NOT redirect to /
     return res.redirect('/login');
   }
   next();
 };
 
+// ✅ ADDED: Health check endpoint for Render
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
+// ... [ALL YOUR EXISTING ROUTES REMAIN THE SAME FROM HERE] ...
+// Paste all your existing routes starting from LOGIN PAGE (line 69 in your original code)
+// Just make sure to replace the PORT line as shown above
 
 /* ================= ROUTES ================= */
 
@@ -654,5 +678,4 @@ app.get('/inline-pdf/:id', requireLogin, isAdmin, async (req, res) => {
 });
 
 
-/* ================= START SERVER ================= */
-app.listen(PORT,()=>console.log(`Server running at http://localhost:${PORT}`));
+

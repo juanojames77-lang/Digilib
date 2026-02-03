@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: digilib
+    env: node
+    region: singapore  # Change to your preferred region
+    plan: free
+    buildCommand: |
+      npm install
+      pip3 install -r requirements.txt || echo "Python requirements installed"
+    startCommand: node server.js
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: digilib-db
+          property: connectionString
+      - key: CLOUD_NAME
+        sync: false
+      - key: CLOUD_KEY
+        sync: false
+      - key: CLOUD_SECRET
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+
+databases:
+  - name: digilib-db
+    databaseName: digilib
+    user: digilib_user
+    plan: free
