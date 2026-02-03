@@ -2,11 +2,15 @@ services:
   - type: web
     name: digilib
     env: node
-    region: singapore  # Change to your preferred region
+    region: singapore
     plan: free
     buildCommand: |
+      echo "🚀 Installing Node dependencies..."
       npm install
-      pip3 install -r requirements.txt || echo "Python requirements installed"
+      echo "🐍 Installing Python dependencies..."
+      python3 -m pip install --upgrade pip
+      python3 -m pip install -r requirements.txt
+      echo "✅ Build complete!"
     startCommand: node server.js
     envVars:
       - key: DATABASE_URL
@@ -23,9 +27,12 @@ services:
         generateValue: true
       - key: NODE_ENV
         value: production
+      - key: PYTHONPATH
+        value: /opt/render/project/src/ml:/opt/render/.local/bin
 
 databases:
   - name: digilib-db
     databaseName: digilib
     user: digilib_user
     plan: free
+    ipAllowList: []

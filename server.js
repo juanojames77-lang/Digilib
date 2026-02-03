@@ -1,4 +1,4 @@
-// server.js - UPDATED FOR RENDER DEPLOYMENT
+// server.js - COMPLETE VERSION FOR RENDER
 require('dotenv').config();
 const express = require('express');
 const bcrypt = require('bcrypt');
@@ -23,13 +23,13 @@ app.use(express.static('public'));
 
 /* ================= SESSION ================= */
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'super-secret-key-change-this', // ✅ CHANGED
+  secret: process.env.SESSION_SECRET || 'digilib-secret-key-change-me',
   resave: false,
   saveUninitialized: false,
   cookie: { 
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // ✅ ADDED FOR RENDER
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000
   }
 }));
 
@@ -42,7 +42,6 @@ app.use((req, res, next) => {
 });
 
 /* ================= DATABASE ================= */
-// ✅ UPDATED FOR RENDER POSTGRESQL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
@@ -59,14 +58,13 @@ const storage = new CloudinaryStorage({
   cloudinary, 
   params: { 
     folder: 'theses', 
-    resource_type: 'raw',
-    allowed_formats: ['pdf']
+    resource_type: 'raw'
   } 
 });
 
 const upload = multer({ 
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  limits: { fileSize: 10 * 1024 * 1024 }
 });
 
 /* ================= MIDDLEWARE ================= */
@@ -84,9 +82,20 @@ const isAdmin = (req, res, next) => {
   next();
 };
 
-// ✅ ADDED: Health check endpoint for Render
+// ✅ ADDED: Health check for Render
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
+});
+
+// ✅ ADDED: Fix for Render's Python path
+app.use((req, res, next) => {
+  // Use /tmp directory for temporary files on Render
+  if (process.env.NODE_ENV === 'production') {
+    global.__tmpdir = '/tmp';
+  } else {
+    global.__tmpdir = path.join(__dirname, 'temp');
+  }
+  next();
 });
 
 // ... [ALL YOUR EXISTING ROUTES REMAIN THE SAME FROM HERE] ...
@@ -679,3 +688,8 @@ app.get('/inline-pdf/:id', requireLogin, isAdmin, async (req, res) => {
 
 
 
+/* ================= START SERVER ================= */
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`✅ Environment: ${process.env.NODE_ENV || 'development'}`);
+});
