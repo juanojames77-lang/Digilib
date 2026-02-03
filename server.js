@@ -46,7 +46,36 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
+// ✅ ADD THIS: Auto-check database on startup
+async function checkDatabase() {
+  try {
+    console.log('🔍 Checking database connection...');
+    await pool.query('SELECT NOW()');
+    console.log('✅ Database connected successfully');
+    
+    // Check if users table exists
+    const result = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'users'
+      );
+    `);
+    
+    if (!result.rows[0].exists) {
+      console.log('⚠️ Database tables not found. Visit /setup to create them.');
+    } else {
+      console.log('✅ Database tables exist');
+    }
+    
+  } catch (error) {
+    console.error('❌ Database connection failed:', error.message);
+    console.log('💡 Make sure DATABASE_URL is correct and database is running');
+  }
+}
 
+// Call it when server starts
+checkDatabase();
 /* ================= CLOUDINARY ================= */
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
@@ -97,7 +126,129 @@ app.use((req, res, next) => {
   }
   next();
 });
-
+// ================= DATABASE SETUP PAGE =================
+// ONE-TIME USE: https://your-app.onrender.com/setup
+// PUT THIS RIGHT HERE - BEFORE ALL OTHER ROUTES!
+app.get('/setup', async (req, res) => {
+  try {
+    console.log('🔧 Running database setup...');
+    
+    // Your complete SQL for all tables
+    const sql = `
+      -- 1. USERS TABLE
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(100) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      
+      -- 2. PDFS TABLE
+      CREATE TABLE IF NOT EXISTS pdfs (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        cluster INT DEFAULT 0,
+        url TEXT NOT NULL,
+        is_private BOOLEAN DEFAULT false,
+        uploader VARCHAR(100),
+        confidence FLOAT DEFAULT 0.0,
+        uploaded_at TIMESTAMP DEFAULT NOW()
+      );
+      
+      -- 3. FAVORITES TABLE
+      CREATE TABLE IF NOT EXISTS favorites (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(100) NOT NULL,
+        pdf_id INT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(username, pdf_id)
+      );
+      
+      -- 4. RECENTLY VIEWED TABLE
+      CREATE TABLE IF NOT EXISTS recently_viewed (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(100) NOT NULL,
+        pdf_id INT NOT NULL,
+        viewed_at TIMESTAMP DEFAULT NOW()
+      );
+      
+      -- 5. DOWNLOAD REQUESTS TABLE
+      CREATE TABLE IF NOT EXISTS download_requests (
+        id SERIAL PRIMARY KEY,
+        pdf_id INT NOT NULL,
+        username VARCHAR(100) NOT NULL,
+        status VARCHAR(20) DEFAULT 'pending',
+        requested_at TIMESTAMP DEFAULT NOW(),
+        responded_at TIMESTAMP
+      );
+      
+      -- 6. DOWNLOAD HISTORY TABLE
+      CREATE TABLE IF NOT EXISTS download_history (
+        id SERIAL PRIMARY KEY,
+        pdf_id INT NOT NULL,
+        username VARCHAR(100) NOT NULL,
+        downloaded_at TIMESTAMP DEFAULT NOW()
+      );
+      
+      -- 7. SEARCH HISTORY TABLE
+      CREATE TABLE IF NOT EXISTS search_history (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(100) NOT NULL,
+        query TEXT NOT NULL,
+        searched_at TIMESTAMP DEFAULT NOW()
+      );
+      
+      -- 8. UPLOAD HISTORY TABLE
+      CREATE TABLE IF NOT EXISTS upload_history (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        course INT NOT NULL,
+        uploaded_by VARCHAR(100) NOT NULL,
+        uploaded_at TIMESTAMP DEFAULT NOW()
+      );
+      
+      -- 9. CREATE ADMIN USER (password: admin123)
+      INSERT INTO users (username, password) 
+      VALUES ('admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeG3ZhokpQwA7c6.8ZPJk8hGt6p/Y.BCa')
+      ON CONFLICT (username) DO NOTHING;
+      
+      -- 10. CREATE TEST USER (password: user123)
+      INSERT INTO users (username, password) 
+      VALUES ('testuser', '$2a$10$N9qo8uLOickgx2ZMRZoMyeG3ZhokpQwA7c6.8ZPJk8hGt6p/Y.BCa')
+      ON CONFLICT (username) DO NOTHING;
+    `;
+    
+    await pool.query(sql);
+    
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial; padding: 40px; background: #f0f0f0; }
+          .success { background: #4CAF50; color: white; padding: 20px; border-radius: 10px; }
+          .btn { background: #2196F3; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="success">
+          <h1>✅ DATABASE SETUP COMPLETE!</h1>
+          <p>All tables created successfully.</p>
+          <p>Admin: <strong>admin</strong> / <strong>admin123</strong></p>
+        </div>
+        <a href="/login" class="btn">Go to Login</a>
+      </body>
+      </html>
+    `);
+    
+  } catch (error) {
+    res.send(`
+      <h1>❌ ERROR</h1>
+      <pre>${error.message}</pre>
+      <a href="/login">Try login anyway</a>
+    `);
+  }
+});
 // ... [ALL YOUR EXISTING ROUTES REMAIN THE SAME FROM HERE] ...
 // Paste all your existing routes starting from LOGIN PAGE (line 69 in your original code)
 // Just make sure to replace the PORT line as shown above
@@ -686,137 +837,7 @@ app.get('/inline-pdf/:id', requireLogin, isAdmin, async (req, res) => {
   }
 });
 
-// ================= TEMPORARY SETUP PAGE =================
-// Add this BEFORE app.listen()
-app.get('/setup', async (req, res) => {
-  try {
-    // Your complete SQL for all tables
-    const sql = `
-      -- 1. USERS TABLE
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        username VARCHAR(100) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-      
-      -- 2. PDFS TABLE
-      CREATE TABLE IF NOT EXISTS pdfs (
-        id SERIAL PRIMARY KEY,
-        title VARCHAR(255) NOT NULL,
-        cluster INT DEFAULT 0,
-        url TEXT NOT NULL,
-        is_private BOOLEAN DEFAULT false,
-        uploader VARCHAR(100),
-        confidence FLOAT DEFAULT 0.0,
-        uploaded_at TIMESTAMP DEFAULT NOW()
-      );
-      
-      -- 3. FAVORITES TABLE
-      CREATE TABLE IF NOT EXISTS favorites (
-        id SERIAL PRIMARY KEY,
-        username VARCHAR(100) NOT NULL,
-        pdf_id INT NOT NULL,
-        created_at TIMESTAMP DEFAULT NOW(),
-        UNIQUE(username, pdf_id)
-      );
-      
-      -- 4. RECENTLY VIEWED TABLE
-      CREATE TABLE IF NOT EXISTS recently_viewed (
-        id SERIAL PRIMARY KEY,
-        username VARCHAR(100) NOT NULL,
-        pdf_id INT NOT NULL,
-        viewed_at TIMESTAMP DEFAULT NOW()
-      );
-      
-      -- 5. DOWNLOAD REQUESTS TABLE
-      CREATE TABLE IF NOT EXISTS download_requests (
-        id SERIAL PRIMARY KEY,
-        pdf_id INT NOT NULL,
-        username VARCHAR(100) NOT NULL,
-        status VARCHAR(20) DEFAULT 'pending',
-        requested_at TIMESTAMP DEFAULT NOW(),
-        responded_at TIMESTAMP
-      );
-      
-      -- 6. DOWNLOAD HISTORY TABLE
-      CREATE TABLE IF NOT EXISTS download_history (
-        id SERIAL PRIMARY KEY,
-        pdf_id INT NOT NULL,
-        username VARCHAR(100) NOT NULL,
-        downloaded_at TIMESTAMP DEFAULT NOW()
-      );
-      
-      -- 7. SEARCH HISTORY TABLE
-      CREATE TABLE IF NOT EXISTS search_history (
-        id SERIAL PRIMARY KEY,
-        username VARCHAR(100) NOT NULL,
-        query TEXT NOT NULL,
-        searched_at TIMESTAMP DEFAULT NOW()
-      );
-      
-      -- 8. UPLOAD HISTORY TABLE
-      CREATE TABLE IF NOT EXISTS upload_history (
-        id SERIAL PRIMARY KEY,
-        title VARCHAR(255) NOT NULL,
-        course INT NOT NULL,
-        uploaded_by VARCHAR(100) NOT NULL,
-        uploaded_at TIMESTAMP DEFAULT NOW()
-      );
-      
-      -- 9. CREATE ADMIN USER (password: admin123)
-      INSERT INTO users (username, password) 
-      VALUES ('admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeG3ZhokpQwA7c6.8ZPJk8hGt6p/Y.BCa')
-      ON CONFLICT (username) DO NOTHING;
-    `;
-    
-    await pool.query(sql);
-    
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { font-family: Arial; padding: 40px; background: #f0f0f0; }
-          .success { background: #4CAF50; color: white; padding: 20px; border-radius: 10px; }
-          .info { background: #2196F3; color: white; padding: 20px; border-radius: 10px; margin-top: 20px; }
-        </style>
-      </head>
-      <body>
-        <div class="success">
-          <h1>✅ DATABASE SETUP COMPLETE!</h1>
-          <p>All tables created successfully.</p>
-        </div>
-        
-        <div class="info">
-          <h2>📋 Login Credentials:</h2>
-          <p><strong>Username:</strong> admin</p>
-          <p><strong>Password:</strong> admin123</p>
-          <p><strong>⚠️ Change this password immediately after login!</strong></p>
-        </div>
-        
-        <div style="margin-top: 30px;">
-          <a href="/login" style="background: #2196F3; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px;">
-            🚀 GO TO LOGIN PAGE
-          </a>
-        </div>
-        
-        <div style="margin-top: 30px; color: red;">
-          <p><strong>IMPORTANT:</strong> Remove this /setup route from server.js after use!</p>
-        </div>
-      </body>
-      </html>
-    `);
-    
-  } catch (error) {
-    res.send(`
-      <h1 style="color: red;">❌ ERROR</h1>
-      <pre style="background: #ffebee; padding: 20px; border-radius: 5px;">${error.message}</pre>
-      <p>Check if tables already exist.</p>
-      <a href="/login">Try login anyway</a>
-    `);
-  }
-});
+
 
 /* ================= START SERVER ================= */
 app.listen(PORT, () => {
