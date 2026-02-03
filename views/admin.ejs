@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-store" />
+<title>DIGILIB | Admin Dashboard</title>
+
+<link rel="stylesheet" href="/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+/* ========== BASE ========== */
+body{
+  font-family:'Segoe UI',sans-serif;
+  margin:0;
+  background:#f4f6fb;
+  transition:.3s;
+}
+a{text-decoration:none}
+
+/* ========== HEADER ========== */
+header{
+  background:#3f51b5;
+  color:#fff;
+  padding:14px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  position:sticky;
+  top:0;
+  z-index:1000;
+}
+header h1{margin:0;font-size:22px}
+
+/* ========== PROFILE ========== */
+.profile-bubble{
+  background:#fff;
+  color:#3f51b5;
+  padding:6px 14px;
+  border-radius:30px;
+  cursor:pointer;
+  position:relative;
+  font-weight:600;
+}
+.dropdown{
+  display:none;
+  position:absolute;
+  right:0;
+  margin-top:10px;
+  background:#fff;
+  border-radius:10px;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+  overflow:hidden;
+}
+.dropdown a,.dropdown label{
+  padding:10px 14px;
+  display:block;
+  color:#333;
+}
+.dropdown a:hover{background:#f0f0f0}
+
+/* ========== LAYOUT ========== */
+.wrapper{
+  display:flex;
+  min-height:100vh;
+}
+
+/* ========== SIDEBAR ========== */
+.sidebar{
+  width:260px;
+  background:#1f2a60;
+  color:#fff;
+  padding:25px 20px;
+  position:fixed;
+  height:100%;
+}
+.brand{
+  text-align:center;
+  margin-bottom:30px;
+}
+.brand img{
+  width:110px;
+  max-width:100%;
+  margin-bottom:15px;
+}
+.brand h2{
+  margin:0;
+  letter-spacing:2px;
+  font-weight:800;
+}
+.nav a{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px 15px;
+  border-radius:10px;
+  color:#cfd3ff;
+  margin-bottom:8px;
+  transition:.3s;
+  font-weight:500;
+}
+.nav a:hover{background:#2f3da1;color:#fff}
+.nav a.active{
+  background:#3f51b5;
+  color:#fff;
+  box-shadow:0 8px 20px rgba(63,81,181,.5);
+}
+
+/* ========== CONTENT ========== */
+.content{
+  margin-left:260px;
+  padding:30px;
+  width:100%;
+}
+.card{
+  background:#fff;
+  padding:25px;
+  border-radius:15px;
+  box-shadow:0 10px 30px rgba(0,0,0,.08);
+  margin-bottom:25px;
+}
+
+/* ========== TABLE ========== */
+.table-wrapper{
+  max-height:420px;
+  overflow-y:auto;
+  border-radius:12px;
+  border:1px solid #e0e0e0;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+thead th{
+  position:sticky;
+  top:0;
+  z-index:2;
+  background:#3f51b5;
+  color:#fff;
+  padding:12px;
+}
+
+td{
+  padding:12px;
+  border-bottom:1px solid #eee;
+}
+
+tr:hover{background:#f9f9f9}
+
+button{
+  background:#3f51b5;
+  color:#fff;
+  border:none;
+  padding:7px 14px;
+  border-radius:8px;
+  cursor:pointer;
+  transition:.3s;
+}
+button:hover{transform:scale(1.05)}
+
+/* ========== FORMS ========== */
+input[type=text], input[type=file], select{
+  padding:12px;
+  border-radius:8px;
+  border:1px solid #ccc;
+  width:100%;
+  max-width:350px;
+}
+
+/* ========== SPINNER ========== */
+.spinner{
+  display:none;
+  width:40px;
+  height:40px;
+  border:5px solid #ccc;
+  border-top:5px solid #3f51b5;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+  margin:10px auto;
+}
+@keyframes spin{
+  0%{transform:rotate(0deg);}
+  100%{transform:rotate(360deg);}
+}
+
+/* ========== MODAL ========== */
+.modal{
+  display:none;
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:rgba(0,0,0,0.5);
+  justify-content:center;
+  align-items:center;
+}
+.modal-content{
+  background:#fff;
+  padding:25px;
+  border-radius:12px;
+  max-width:450px;
+  width:90%;
+  box-shadow:0 6px 20px rgba(0,0,0,0.2);
+}
+
+/* ========== DARK MODE ========== */
+.dark-mode{
+  background:#121212;
+  color:#eee;
+}
+.dark-mode .card{background:#1e1e1e}
+.dark-mode .sidebar{background:#111}
+.dark-mode th{background:#333}
+.dark-mode button{background:#555}
+
+/* ========== MOBILE ========== */
+@media(max-width:768px){
+  .sidebar{
+    position:relative;
+    width:100%;
+    height:auto;
+  }
+  .content{margin-left:0}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Admin Dashboard</h1>
+  <div class="profile-bubble" id="profileBubble">
+    <%= user %>
+    <div class="dropdown" id="profileDropdown">
+      <a href="/logout">Logout</a>
+      <label><input type="checkbox" id="darkToggle"> Dark Mode</label>
+    </div>
+  </div>
+</header>
+
+<div class="wrapper">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="/logo.png" alt="DIGILIB">
+      <h2>DIGILIB</h2>
+    </div>
+
+    <nav class="nav">
+      <a href="#" id="uploadLink" class="active">📤 Upload PDFs</a>
+      <a href="/admin/download-requests">📥 Download Requests</a>
+      <a href="/admin/analytics">📊 Analytics</a>
+    </nav>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <!-- UPLOAD SECTION -->
+    <div class="card" id="uploadSection">
+      <h2>Upload PDF</h2>
+      <form id="uploadForm">
+        <input type="file" name="pdf" accept=".pdf" required>
+        <label style="margin-left:10px;"><input type="checkbox" name="private"> Private</label>
+        <button type="submit">Upload</button>
+      </form>
+      <div class="spinner" id="spinner"></div>
+      <div id="uploadPreview"></div>
+
+      <h2>All PDFs</h2>
+      <label for="courseFilter">Filter by Course:</label>
+  <select id="courseFilter">
+  <option value="all">All</option>
+  <% clusters.forEach((c,i)=>{ %>
+    <option value="<%= i %>"><%= c %></option>
+  <% }) %>
+</select>
+      <div class="table-wrapper">
+        <table id="pdfTable">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Course</th>
+              <th>Status</th>
+              <th>Uploader</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% pdfs.forEach(pdf => { %>
+            <tr data-id="<%= pdf.id %>" data-cluster="<%= pdf.cluster %>">
+              <td><%= pdf.title %></td>
+              <td><%= clusters[pdf.cluster] || 'Unknown' %></td>
+              <td><%= pdf.is_private ? 'Private' : 'Public' %></td>
+              <td><%= pdf.uploader %></td>
+              <td>
+                <a href="/view-admin/<%= pdf.id %>"><button>View</button></a>
+                <button class="editBtn">Edit</button>
+                <form action="/delete/<%= pdf.id %>" method="POST" style="display:inline;">
+                  <button type="submit">Delete</button>
+                </form>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+
+  </main>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal" id="editModal">
+  <div class="modal-content">
+    <h3>Edit Cluster</h3>
+    <form id="editForm">
+      <input type="hidden" name="id" id="editId">
+      <select name="course" id="editCourse">
+        <% clusters.forEach((c,i)=>{ %>
+          <option value="<%= i %>"><%= c %></option>
+        <% }) %>
+      </select>
+      <div style="margin-top:15px;">
+        <button type="submit">Save</button>
+        <button type="button" onclick="closeModal()">Cancel</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// CORE LOGIC UNTOUCHED
+const clusters = <%- JSON.stringify(clusters) %>;
+const spinner = document.getElementById('spinner');
+const preview = document.getElementById('uploadPreview');
+
+const bubble = document.getElementById('profileBubble');
+const dropdown = document.getElementById('profileDropdown');
+bubble.addEventListener('click',()=>{ dropdown.style.display = dropdown.style.display==='block'?'none':'block'; });
+
+const darkToggle = document.getElementById('darkToggle');
+darkToggle.addEventListener('change',()=>{ document.body.classList.toggle('dark-mode', darkToggle.checked); });
+
+document.getElementById('uploadForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const fileInput = e.target.pdf;
+  if(fileInput.files[0].type!=='application/pdf'){ alert('Only PDF files allowed'); return; }
+
+  const data = new FormData(e.target);
+  spinner.style.display='block';
+  const res = await fetch('/upload', { method:'POST', body:data });
+  const json = await res.json();
+  spinner.style.display='none';
+
+  if(json.success){
+    const overlay = document.createElement('div');
+    overlay.style.position='fixed';
+    overlay.style.top=0;
+    overlay.style.left=0;
+    overlay.style.width='100%';
+    overlay.style.height='100%';
+    overlay.style.background='rgba(0,0,0,0.7)';
+    overlay.style.display='flex';
+    overlay.style.justifyContent='center';
+    overlay.style.alignItems='center';
+    overlay.style.zIndex=9999;
+    overlay.innerHTML = `
+      <div style="background:#fff; padding:30px 50px; border-radius:10px; text-align:center; font-size:18px;">
+        <h2>Upload Successful ✅</h2>
+        <p><strong>Title:</strong> ${json.title}</p>
+        <p><strong>Cluster:</strong> ${clusters[json.cluster]}</p>
+        <p><strong>Confidence:</strong> ${(json.confidence*100).toFixed(2)}%</p>
+        <p>Refreshing page...</p>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    setTimeout(()=> location.reload(), 2000);
+  } else {
+    const overlay = document.createElement('div');
+    overlay.style.position='fixed';
+    overlay.style.top=0;
+    overlay.style.left=0;
+    overlay.style.width='100%';
+    overlay.style.height='100%';
+    overlay.style.background='rgba(0,0,0,0.7)';
+    overlay.style.display='flex';
+    overlay.style.justifyContent='center';
+    overlay.style.alignItems='center';
+    overlay.style.zIndex=9999;
+    overlay.innerHTML = `
+      <div style="background:#fff; padding:30px 50px; border-radius:10px; text-align:center; font-size:18px; color:red;">
+        <h2>Upload Failed ❌</h2>
+        <p>${json.message}</p>
+        <p>Closing in 2 seconds...</p>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    setTimeout(()=> overlay.remove(), 2000);
+  }
+});
+
+// EDIT MODAL
+const editModal = document.getElementById('editModal');
+const editId = document.getElementById('editId');
+const editCourse = document.getElementById('editCourse');
+function attachEditListeners(){
+  document.querySelectorAll('.editBtn').forEach(btn=>{
+    btn.onclick = ()=>{
+      const tr = btn.closest('tr');
+      editId.value = tr.dataset.id;
+      editCourse.value = Array.from(editCourse.options).findIndex(opt=>opt.text===tr.children[1].textContent);
+      editModal.style.display='flex';
+    };
+  });
+}
+function closeModal(){ editModal.style.display='none'; }
+attachEditListeners();
+document.getElementById('editForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const id = editId.value;
+  const course = editCourse.value;
+  const res = await fetch(`/update-course/${id}`,{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:`course=${course}`
+  });
+  if(res.ok){
+    const tr = document.querySelector(`tr[data-id="${id}"]`);
+    tr.children[1].textContent = editCourse.options[editCourse.selectedIndex].text;
+    closeModal();
+  }
+});
+
+// TOGGLE SECTIONS
+const uploadLink = document.getElementById('uploadLink');
+const analyticsLink = document.getElementById('analyticsLink');
+const uploadSection = document.getElementById('uploadSection');
+const analyticsSection = document.getElementById('analyticsSection');
+
+uploadLink.addEventListener('click',()=>{
+  uploadSection.style.display='block';
+  analyticsSection.style.display='none';
+  uploadLink.classList.add('active');
+  analyticsLink.classList.remove('active');
+});
+
+const courseFilter = document.getElementById('courseFilter');
+courseFilter.addEventListener('change', () => {
+  const selected = courseFilter.value;
+  const rows = document.querySelectorAll('#pdfTable tbody tr');
+
+  rows.forEach(row => {
+    if (selected === 'all') {
+      row.style.display = '';
+    } else if (row.dataset.cluster === selected) {
+      row.style.display = '';
+    } else {
+      row.style.display = 'none';
+    }
+  });
+});
+window.addEventListener('pageshow', function (event) {
+  if (event.persisted) {
+    // Page was loaded from back/forward cache
+    window.location.reload();
+  }
+});
+
+</script>
+
+</body>
+</html>

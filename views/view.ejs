@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= file.title %></title>
+  <style>
+    body{
+      margin:0;
+      font-family: Arial, sans-serif;
+      background:#f4f6fb;
+    }
+    header{
+      background:#3f51b5;
+      color:white;
+      padding:15px 30px;
+    }
+    header h1{
+      margin:0;
+      font-size:22px;
+    }
+    .actions{
+      margin-top:10px;
+    }
+    .actions form, .actions a{
+      display:inline-block;
+      margin-right:8px;
+    }
+    .actions button, .actions a{
+      background:white;
+      color:#3f51b5;
+      border:none;
+      padding:8px 14px;
+      border-radius:6px;
+      cursor:pointer;
+      font-weight:bold;
+      text-decoration:none;
+    }
+    .actions button:hover, .actions a:hover{
+      background:#e0e0e0;
+    }
+    .content{
+      display:flex;
+      height:calc(100vh - 90px);
+    }
+    .pdf-container{
+      flex:3;
+      background:white;
+    }
+    iframe{
+      width:100%;
+      height:100%;
+      border:none;
+    }
+    .side-panel{
+      flex:1;
+      padding:20px;
+      background:#ffffff;
+      border-left:1px solid #ddd;
+      overflow-y:auto;
+    }
+    .side-panel h3{
+      margin-top:0;
+      color:#3f51b5;
+    }
+    .side-panel ul{
+      padding-left:20px;
+    }
+    .side-panel li{
+      margin-bottom:10px;
+    }
+    .side-panel a{
+      color:#333;
+      text-decoration:none;
+      font-weight:bold;
+    }
+    .side-panel a:hover{
+      color:#3f51b5;
+    }
+    .message {
+      display:inline-block;
+      margin-left:10px;
+      color: #fff;
+      background: #4caf50;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    @media(max-width:900px){
+      .content{
+        flex-direction:column;
+      }
+      .side-panel{
+        border-left:none;
+        border-top:1px solid #ddd;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <h1><%= file.title %></h1>
+
+  <div class="actions">
+    <!-- FAVORITE BUTTON -->
+    <form method="POST" action="/<%= isFavorite ? 'unfavorite' : 'favorite' %>/<%= file.id %>">
+      <button type="submit">
+        <%= isFavorite ? '★ Remove Favorite' : '☆ Add to Favorites' %>
+      </button>
+    </form>
+
+    <!-- DOWNLOAD / REQUEST BUTTON -->
+    <span id="download-area">
+    <% if (!downloadRequest) { %>
+      <form id="request-download-form">
+        <button type="submit">Request Full PDF</button>
+      </form>
+    <% } else if (downloadRequest.status === 'pending') { %>
+      <button disabled>Request Pending</button>
+    <% } else if (downloadRequest.status === 'accepted') { %>
+      <a href="/download/<%= file.id %>">⬇ Download Full PDF</a>
+    <% } else if (downloadRequest.status === 'rejected') { %>
+      <button disabled>Request Rejected</button>
+    <% } %>
+    </span>
+
+    <a href="/" style="color:rgb(57, 83, 190);">⬅ Back to Library</a>
+  </div>
+</header>
+
+<div class="content">
+
+  <!-- PDF VIEWER -->
+  <div class="pdf-container">
+    <iframe
+      src="https://docs.google.com/gview?url=<%= encodeURIComponent(file.url) %>&embedded=true">
+    </iframe>
+  </div>
+
+  <!-- SIDE PANEL -->
+  <div class="side-panel">
+    <h3>Similar Theses</h3>
+    <% if(similar.length === 0){ %>
+      <p>No similar documents found.</p>
+    <% } else { %>
+      <ul>
+        <% similar.forEach(s => { %>
+          <li>
+            <a href="/view/<%= s.id %>"><%= s.title %></a>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const form = document.getElementById('request-download-form');
+  const downloadArea = document.getElementById('download-area');
+
+  // Submit request
+  if(form){
+    form.addEventListener('submit', async function(e){
+      e.preventDefault();
+      const response = await fetch('/request-download/<%= file.id %>', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'}
+      });
+      if(response.ok){
+        downloadArea.innerHTML = '<button disabled>Request Sent ✅</button>';
+      } else {
+        alert('Request failed or already sent.');
+      }
+    });
+  }
+
+  // Poll for status every 5 seconds
+  setInterval(async () => {
+    const resp = await fetch('/request-status/<%= file.id %>');
+    if(resp.ok){
+      const data = await resp.json();
+      if(data.status === 'accepted'){
+        downloadArea.innerHTML = `<a href="/download/<%= file.id %>">⬇ Download Full PDF</a>`;
+      } else if(data.status === 'rejected'){
+        downloadArea.innerHTML = `<button disabled>Request Rejected</button>`;
+      } else if(data.status === 'pending'){
+        downloadArea.innerHTML = `<button disabled>Request Pending</button>`;
+      }
+    }
+  }, 5000);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Register</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;font-family:'Segoe UI',sans-serif;overflow-x:hidden;}
+body{background:#f0f0f0;display:flex;flex-direction:row;}
+
+/* Logo Section */
+.logo-container{
+  width:50%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#f0f0f0;
+  padding:40px;
+  flex-direction:column;
+}
+.logo-container img{
+  max-width:250px;
+  width:80%;
+  height:auto;
+}
+.logo-text{
+  margin-top:20px;
+  font-size:2.5em;
+  font-weight:bold;
+  font-family:'Arial Black',sans-serif;
+}
+.logo-text span:nth-child(1){ color:#4285F4; } /* D - Blue */
+.logo-text span:nth-child(2){ color:#EA4335; } /* I - Red */
+.logo-text span:nth-child(3){ color:#FBBC05; } /* G - Yellow */
+.logo-text span:nth-child(4){ color:#4285F4; } /* I - Blue */
+.logo-text span:nth-child(5){ color:#34A853; } /* L - Green */
+.logo-text span:nth-child(6){ color:#EA4335; } /* I - Red */
+.logo-text span:nth-child(7){ color:#FBBC05; } /* B - Yellow */
+.logo-text span:nth-child(8){ color:#4285F4; } /* R - Blue */
+.logo-text span:nth-child(9){ color:#34A853; } /* A - Green */
+.logo-text span:nth-child(10){ color:#EA4335; } /* R - Red */
+.logo-text span:nth-child(11){ color:#FBBC05; } /* Y - Yellow */
+
+/* Form Section */
+.form-container{
+  width:50%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(135deg,#3f51b5,#5c6bc0);
+}
+.form-box{
+  background:white;
+  padding:40px;
+  border-radius:12px;
+  width:80%;
+  max-width:400px;
+  color:#333;
+  box-shadow:0 8px 20px rgba(0,0,0,0.2);
+}
+form{display:flex;flex-direction:column;}
+input{padding:12px;margin:10px 0;border-radius:6px;border:1px solid #ccc;font-size:16px;}
+button{padding:12px;margin-top:10px;border:none;border-radius:6px;background:#3f51b5;color:white;font-weight:bold;cursor:pointer;transition:0.3s;}
+button:hover{background:#303f9f;}
+.switch{margin-top:15px;text-align:center;cursor:pointer;color:#3f51b5;font-weight:bold;}
+.error{color:#ff6b6b;font-weight:bold;margin-bottom:10px;}
+.strength{font-size:14px;margin-top:-5px;margin-bottom:10px;font-weight:bold;}
+.weak{color:red;} .medium{color:orange;} .strong{color:green;}
+.form-label{
+  font-size:1.5em;
+  margin-bottom:15px;
+  font-weight:bold;
+  text-align:center;
+  color:#3f51b5;
+}
+
+/* Responsive for mobile */
+@media(max-width:768px){
+  body{flex-direction:column;}
+  .logo-container, .form-container{width:100%;height:auto;padding:20px;}
+  .logo-container img{max-width:200px;}
+  .logo-text{font-size:2em;}
+  .form-box{width:90%;padding:30px;}
+  .form-label{font-size:1.3em;}
+}
+</style>
+</head>
+<body>
+
+<div class="logo-container">
+  <img src="/logo.png" alt="DIGILIBRARY Logo">
+  <div class="logo-text">
+    <span>D</span><span>I</span><span>G</span><span>I</span><span>L</span><span>I</span><span>B</span><span>R</span><span>A</span><span>R</span><span>Y</span>
+  </div>
+</div>
+
+<div class="form-container">
+  <div class="form-box">
+    <div class="form-label">Create Account</div>
+    <% if (error) { %><div class="error"><%= error %></div><% } %>
+    <form action="/register" method="POST">
+      <input type="text" name="username" placeholder="Username" required>
+      <input type="password" id="password" name="password" placeholder="Password" required>
+      <div class="strength" id="strengthText"></div>
+      <button type="submit">Register</button>
+    </form>
+    <div class="switch" id="goLogin">Already have an account? Login</div>
+  </div>
+</div>
+
+<script>
+const password = document.getElementById('password');
+const strengthText = document.getElementById('strengthText');
+
+password.addEventListener('input', () => {
+  const val = password.value;
+  if(val.length<6){ 
+    strengthText.textContent='Weak'; 
+    strengthText.className='strength weak'; 
+  } else if(val.match(/[A-Za-z]/)&&val.match(/[0-9]/)&&val.length<10){ 
+    strengthText.textContent='Medium'; 
+    strengthText.className='strength medium'; 
+  } else if(val.match(/[A-Za-z]/)&&val.match(/[0-9]/)&&val.match(/[^A-Za-z0-9]/)){ 
+    strengthText.textContent='Strong'; 
+    strengthText.className='strength strong'; 
+  } else{ strengthText.textContent=''; }
+});
+
+const goLogin = document.getElementById('goLogin');
+goLogin.addEventListener('click', () => {
+  window.location='/login';
+});
+</script>
+
+</body>
+</html>

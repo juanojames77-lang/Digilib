@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title><%= file.title %></title>
+
+  <style>
+    body{
+      margin:0;
+      font-family: Arial, sans-serif;
+      background:#f4f6fb;
+    }
+    header{
+      background:#3f51b5;
+      color:white;
+      padding:15px 30px;
+    }
+    header h1{
+      margin:0;
+      font-size:22px;
+    }
+    .actions{
+      margin-top:10px;
+    }
+    .actions form{
+      display:inline;
+    }
+    .actions button{
+      background:white;
+      color:#3f51b5;
+      border:none;
+      padding:8px 14px;
+      border-radius:6px;
+      cursor:pointer;
+      font-weight:bold;
+      margin-right:8px;
+    }
+    .content{
+      display:flex;
+      height:calc(100vh - 90px);
+    }
+    .pdf-container{
+      flex:3;
+      background:white;
+    }
+    iframe{
+      width:100%;
+      height:100%;
+      border:none;
+    }
+    .side-panel{
+      flex:1;
+      padding:20px;
+      background:#fff;
+      border-left:1px solid #ddd;
+      overflow-y:auto;
+    }
+    @media(max-width:900px){
+      .content{ flex-direction:column; }
+      .side-panel{ border-left:none; border-top:1px solid #ddd; }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1><%= file.title %></h1>
+
+  <div class="actions">
+
+    <!-- TOGGLE PRIVATE -->
+    <form method="POST" action="/toggle-private/<%= file.id %>">
+      <button type="submit">
+        <%= file.is_private ? '🔓 Mark as Public' : '🔒 Mark as Private' %>
+      </button>
+    </form>
+
+    <a href="/admin" style="color:white;text-decoration:none;font-weight:bold;">
+      ⬅ Back to Dashboard
+    </a>
+
+  </div>
+</header>
+
+<div class="content">
+
+  <!-- INLINE PDF (NO DOWNLOAD) -->
+  <div class="pdf-container">
+    <iframe src="/inline-pdf/<%= file.id %>"></iframe>
+  </div>
+
+  <!-- SIMILAR -->
+  <div class="side-panel">
+    <h3>Similar Theses</h3>
+
+    <% if(similar.length === 0){ %>
+      <p>No similar documents found.</p>
+    <% } else { %>
+      <ul>
+        <% similar.forEach(s => { %>
+          <li>
+            <a href="/view-admin/<%= s.id %>"><%= s.title %></a>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </div>
+
+</div>
+
+</body>
+</html>

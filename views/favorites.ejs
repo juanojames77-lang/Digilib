@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-store" />
+<title>DIGILIB | Favorites</title>
+
+<link rel="stylesheet" href="/style.css">
+
+<style>
+/* ===== BASE ===== */
+body { font-family:'Segoe UI',sans-serif; margin:0; background:#f4f6fb; transition:.3s; }
+a { text-decoration:none; }
+
+/* ===== HEADER ===== */
+header { background:#3f51b5; color:#fff; padding:14px 20px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:1000; }
+header h1 { margin:0; font-size:22px; }
+
+/* ===== PROFILE BUBBLE ===== */
+.profile-bubble-fav {
+  background:#fff; color:#3f51b5; padding:6px 14px; border-radius:30px; cursor:pointer; position:relative; font-weight:600;
+}
+.dropdown-fav {
+  display:none; position:absolute; right:0; margin-top:10px; background:#fff; border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,.15); overflow:hidden;
+}
+.dropdown-fav a, .dropdown-fav label { padding:10px 14px; display:block; color:#333; }
+.dropdown-fav a:hover { background:#f0f0f0; }
+
+/* ===== LAYOUT ===== */
+.wrapper-fav { display:flex; min-height:100vh; }
+
+/* ===== SIDEBAR ===== */
+.sidebar-fav {
+  width:260px; background:#1f2a60; color:#fff; padding:25px 20px; position:fixed; height:100%;
+}
+.brand-fav { text-align:center; margin-bottom:30px; }
+.brand-fav img { width:110px; max-width:100%; margin-bottom:15px; }
+.brand-fav h2 { margin:0; letter-spacing:2px; font-weight:800; }
+.nav-fav a { display:flex; align-items:center; gap:12px; padding:12px 15px; border-radius:10px; color:#cfd3ff; margin-bottom:8px; transition:.3s; font-weight:500; }
+.nav-fav a:hover { background:#2f3da1; color:#fff; }
+.nav-fav a.active { background:#3f51b5; color:#fff; box-shadow:0 8px 20px rgba(63,81,181,.5); }
+
+/* ===== CONTENT ===== */
+.content-fav { margin-left:260px; padding:30px; width:100%; }
+.card-fav { background:#fff; padding:25px; border-radius:15px; box-shadow:0 10px 30px rgba(0,0,0,.08); margin-bottom:25px; }
+
+/* ===== TABLE ===== */
+.table-wrapper-fav { max-height:420px; overflow-y:auto; border-radius:12px; border:1px solid #e0e0e0; }
+table#favoritesTable { width:100%; border-collapse:collapse; }
+thead th { position:sticky; top:0; z-index:2; background:#3f51b5; color:#fff; padding:12px; }
+td { padding:12px; border-bottom:1px solid #eee; }
+tr:hover { background:#f9f9f9; }
+button { background:#3f51b5; color:#fff; border:none; padding:7px 14px; border-radius:8px; cursor:pointer; transition:.3s; }
+button:hover { transform:scale(1.05); }
+
+/* ===== DARK MODE ===== */
+.dark-mode { background:#121212; color:#eee; }
+.dark-mode .card-fav { background:#1e1e1e; color:#eee; }
+.dark-mode .sidebar-fav { background:#111; color:#eee; }
+.dark-mode .sidebar-fav .nav-fav a { color:#cfd3ff; }
+.dark-mode .sidebar-fav .nav-fav a.active { background:#3f51b5; box-shadow:0 8px 20px rgba(63,81,181,.5); }
+.dark-mode table#favoritesTable thead th { background:#333; color:#fff; }
+.dark-mode table#favoritesTable td { color:#eee; border-color:#555; }
+.dark-mode button { background:#555; color:#fff; }
+
+/* ===== MOBILE ===== */
+@media(max-width:768px){
+  .sidebar-fav { position:relative; width:100%; height:auto; }
+  .content-fav { margin-left:0; }
+  table, thead, tbody, th, td, tr { display:block; }
+  thead tr { display:none; }
+  tr { margin-bottom:15px; background:#fff; border-radius:10px; box-shadow:0 5px 10px rgba(0,0,0,0.05); padding:15px; }
+  td { border:none; display:flex; justify-content:space-between; padding:8px 0; }
+  td::before { font-weight:bold; content:attr(data-label); color:#555; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>My Favorites</h1>
+  <div class="profile-bubble-fav" id="profileBubbleFav">
+    <%= username %>
+    <div class="dropdown-fav" id="profileDropdownFav">
+      <a href="/logout">Logout</a>
+      <label><input type="checkbox" id="darkToggleFav"> Dark Mode</label>
+    </div>
+  </div>
+</header>
+
+<div class="wrapper-fav">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar-fav">
+    <div class="brand-fav">
+      <img src="/logo.png" alt="DIGILIB">
+      <h2>DIGILIB</h2>
+    </div>
+
+    <nav class="nav-fav">
+      <a href="/" class="nav-link">🏠 Dashboard</a>
+      <a href="/favorites" class="nav-link active">⭐ Favorites</a>
+      <a href="/downloads" class="nav-link">⬇ Downloads</a>
+      <a href="/user/analytics" class="nav-link">📊 Analytics</a>
+    </nav>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content-fav">
+    <div class="card-fav">
+      <% if(pdfs.length > 0){ %>
+        <div class="table-wrapper-fav">
+          <table id="favoritesTable">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Course</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% pdfs.forEach(pdf => { %>
+              <tr>
+                <td data-label="Title"><%= pdf.title %></td>
+                <td data-label="Cluster"><%= clusters[pdf.cluster] || 'Unknown' %></td>
+                <td data-label="Actions">
+                  <a href="/view/<%= pdf.id %>"><button>View</button></a>
+                  <form action="/unfavorite/<%= pdf.id %>" method="POST" style="display:inline;">
+                    <button type="submit">Remove</button>
+                  </form>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <div class="no-favorites">You haven’t added any favorites yet.</div>
+      <% } %>
+    </div>
+  </main>
+</div>
+
+<script>
+/* Profile bubble toggle */
+const profileBubbleFav = document.getElementById('profileBubbleFav');
+const profileDropdownFav = document.getElementById('profileDropdownFav');
+profileBubbleFav.onclick = () => {
+  profileDropdownFav.style.display = profileDropdownFav.style.display === 'block' ? 'none' : 'block';
+};
+
+/* Dark mode */
+const darkToggleFav = document.getElementById('darkToggleFav');
+darkToggleFav.onchange = () => {
+  document.body.classList.toggle('dark-mode', darkToggleFav.checked);
+};
+window.addEventListener('pageshow', function (event) {
+  if (event.persisted) {
+    // Page was loaded from back/forward cache
+    window.location.reload();
+  }
+});
+</script>
+
+</body>
+</html>

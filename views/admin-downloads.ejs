@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIGILIB | Download Requests</title>
+<link rel="stylesheet" href="/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+/* BASE */
+body{font-family:'Segoe UI',sans-serif;margin:0;background:#f4f6fb;transition:.3s}
+a{text-decoration:none}
+
+/* HEADER */
+header{background:#3f51b5;color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:1000}
+header h1{margin:0;font-size:22px}
+
+/* PROFILE */
+.profile-bubble-downloads{background:#fff;color:#3f51b5;padding:6px 14px;border-radius:30px;cursor:pointer;position:relative;font-weight:600}
+.dropdown-downloads{display:none;position:absolute;right:0;margin-top:10px;background:#fff;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.15);overflow:hidden}
+.dropdown-downloads a,.dropdown-downloads label{padding:10px 14px;display:block;color:#333}
+.dropdown-downloads a:hover{background:#f0f0f0}
+
+/* LAYOUT */
+.wrapper{display:flex;min-height:100vh}
+
+/* SIDEBAR */
+.sidebar{width:260px;background:#1f2a60;color:#fff;padding:25px 20px;position:fixed;height:100%}
+.brand{text-align:center;margin-bottom:30px}
+.brand img{width:110px;max-width:100%;margin-bottom:15px}
+.brand h2{margin:0;letter-spacing:2px;font-weight:800}
+.nav a{display:flex;align-items:center;gap:12px;padding:12px 15px;border-radius:10px;color:#cfd3ff;margin-bottom:8px;transition:.3s;font-weight:500}
+.nav a:hover{background:#2f3da1;color:#fff}
+.nav a.active{background:#3f51b5;color:#fff;box-shadow:0 8px 20px rgba(63,81,181,.5)}
+
+/* CONTENT */
+.content{margin-left:260px;padding:30px;width:100%}
+.card{background:#fff;padding:25px;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,.08);margin-bottom:25px}
+
+/* TABLE */
+.table-wrapper{max-height:420px;overflow-y:auto;border-radius:12px;border:1px solid #e0e0e0}
+table{width:100%;border-collapse:collapse}
+thead th{position:sticky;top:0;z-index:2;background:#3f51b5;color:#fff;padding:12px}
+td{padding:12px;border-bottom:1px solid #eee}
+tr:hover{background:#f9f9f9}
+button{background:#3f51b5;color:#fff;border:none;padding:7px 14px;border-radius:8px;cursor:pointer;transition:.3s}
+button:hover{transform:scale(1.05)}
+
+/* ANALYTICS */
+#analyticsSectionDownloads{display:none;margin-top:15px;background:#fff;color:#000;padding:15px;border-radius:12px}
+#analyticsSectionDownloads canvas{margin-top:10px;border-radius:8px;background:#f9f9f9}
+
+/* DARK MODE */
+.dark-mode{background:#121212;color:#eee}
+.dark-mode .card{background:#1e1e1e}
+.dark-mode .sidebar{background:#111}
+.dark-mode th{background:#333}
+.dark-mode button{background:#555}
+
+/* MOBILE */
+@media(max-width:768px){.sidebar{position:relative;width:100%;height:auto}.content{margin-left:0}}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Download Requests</h1>
+  <div class="profile-bubble-downloads" id="profileBubbleDownloads">
+    <%= user %>
+    <div class="dropdown-downloads" id="profileDropdownDownloads">
+      <a href="/logout">Logout</a>
+      <label><input type="checkbox" id="darkToggleDownloads"> Dark Mode</label>
+    </div>
+  </div>
+</header>
+
+<div class="wrapper">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="/logo.png" alt="DIGILIB">
+      <h2>DIGILIB</h2>
+    </div>
+    <nav class="nav">
+      <a href="/admin" class="nav-link">📤 Upload PDFs</a>
+      <a href="/admin/download-requests" class="nav-link active">📥 Download Requests</a>
+      <a href="/admin/analytics">📊 Analytics</a>
+    </nav>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <div class="card table-wrapper">
+      <table id="requestsTable">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% requests.forEach(r => { %>
+          <tr>
+            <td><%= r.username %></td>
+            <td><%= r.title %></td>
+            <td><%= r.status %></td>
+            <td>
+              <% if(r.status==='pending'){ %>
+              <form method="POST" action="/admin/download-action/<%= r.id %>">
+                <button name="action" value="accepted">✅ Accept</button>
+                <button name="action" value="rejected">❌ Reject</button>
+              </form>
+              <% } %>
+            </td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// Profile dropdown
+const bubbleDownloads = document.getElementById('profileBubbleDownloads');
+const dropdownDownloads = document.getElementById('profileDropdownDownloads');
+bubbleDownloads.addEventListener('click',()=>{dropdownDownloads.style.display=dropdownDownloads.style.display==='block'?'none':'block'});
+
+// Dark mode
+const darkToggleDownloads = document.getElementById('darkToggleDownloads');
+darkToggleDownloads.addEventListener('change',()=>{document.body.classList.toggle('dark-mode', darkToggleDownloads.checked)});
+
+// Toggle analytics
+const toggleAnalytics = document.getElementById('toggleAnalytics');
+const analyticsSection = document.getElementById('analyticsSectionDownloads');
+toggleAnalytics.addEventListener('click',()=>{analyticsSection.style.display=analyticsSection.style.display==='block'?'none':'block'});
+
+// Highlight active link
+document.querySelectorAll('.nav-link').forEach(link=>{
+  if(window.location.pathname===link.getAttribute('href')){
+    link.classList.add('active');
+  }
+});
+window.addEventListener('pageshow', function (event) {
+  if (event.persisted) {
+    // Page was loaded from back/forward cache
+    window.location.reload();
+  }
+});
+</script>
+
+</body>
+</html>

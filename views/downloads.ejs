@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-store" />
+<title>DIGILIB | Downloads</title>
+
+<link rel="stylesheet" href="/style.css">
+
+<style>
+/* ========== BASE ========== */
+body{
+  font-family:'Segoe UI',sans-serif;
+  margin:0;
+  background:#f4f6fb;
+  transition:.3s;
+}
+a{text-decoration:none}
+
+/* ========== HEADER ========== */
+header{
+  background:#3f51b5;
+  color:#fff;
+  padding:14px 20px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  position:sticky;
+  top:0;
+  z-index:1000;
+}
+header h1{margin:0;font-size:22px}
+
+/* ========== PROFILE ========== */
+.profile-bubble-downloads{
+  background:#fff;
+  color:#3f51b5;
+  padding:6px 14px;
+  border-radius:30px;
+  cursor:pointer;
+  position:relative;
+  font-weight:600;
+}
+.dropdown-downloads{
+  display:none;
+  position:absolute;
+  right:0;
+  margin-top:10px;
+  background:#fff;
+  border-radius:10px;
+  box-shadow:0 10px 30px rgba(0,0,0,.15);
+  overflow:hidden;
+  z-index:100;
+}
+.dropdown-downloads a,.dropdown-downloads label{
+  padding:10px 14px;
+  display:block;
+  color:#333;
+}
+.dropdown-downloads a:hover{background:#f0f0f0}
+
+/* ========== LAYOUT ========== */
+.wrapper-downloads{
+  display:flex;
+  min-height:100vh;
+}
+
+/* ========== SIDEBAR ========== */
+.sidebar{
+  width:260px;
+  background:#1f2a60;
+  color:#fff;
+  padding:25px 20px;
+  position:fixed;
+  height:100%;
+}
+.brand{
+  text-align:center;
+  margin-bottom:30px;
+}
+.brand img{
+  width:110px;
+  max-width:100%;
+  margin-bottom:15px;
+}
+.brand h2{
+  margin:0;
+  letter-spacing:2px;
+  font-weight:800;
+}
+.nav a{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:12px 15px;
+  border-radius:10px;
+  color:#cfd3ff;
+  margin-bottom:8px;
+  transition:.3s;
+  font-weight:500;
+}
+.nav a:hover{background:#2f3da1;color:#fff}
+.nav a.active{
+  background:#3f51b5;
+  color:#fff;
+  box-shadow:0 8px 20px rgba(63,81,181,.5);
+}
+
+/* ========== CONTENT ========== */
+.content-downloads{
+  margin-left:260px;
+  padding:30px;
+  width:100%;
+}
+.card-downloads{
+  background:#fff;
+  padding:25px;
+  border-radius:15px;
+  box-shadow:0 10px 30px rgba(0,0,0,.08);
+  margin-bottom:25px;
+}
+
+/* ========== TABLE ========== */
+.table-wrapper-downloads{
+  max-height:420px;
+  overflow-y:auto;
+  border-radius:12px;
+  border:1px solid #e0e0e0;
+}
+
+table#downloadsTable{
+  width:100%;
+  border-collapse:collapse;
+}
+
+table#downloadsTable thead th{
+  position:sticky;
+  top:0;
+  z-index:2;
+  background:#3f51b5;
+  color:#fff;
+  padding:12px;
+}
+
+table#downloadsTable td{
+  padding:12px;
+  border-bottom:1px solid #eee;
+}
+
+table#downloadsTable tr:hover{background:#f9f9f9}
+
+/* ========== BUTTONS ========== */
+button{
+  background:#3f51b5;
+  color:#fff;
+  border:none;
+  padding:7px 14px;
+  border-radius:8px;
+  cursor:pointer;
+  transition:.3s;
+}
+button:hover{transform:scale(1.05)}
+
+/* ========== MOBILE ========== */
+@media(max-width:768px){
+  .sidebar{
+    position:relative;
+    width:100%;
+    height:auto;
+  }
+  .content-downloads{margin-left:0}
+}
+/* ========== DARK MODE FOR DOWNLOADS ========== */
+.dark-mode{
+  background:#121212;
+  color:#eee;
+}
+.dark-mode .card-downloads { background:#1e1e1e; color:#eee; }
+.dark-mode .sidebar { background:#111; color:#eee; }
+.dark-mode .sidebar .nav a { color:#cfd3ff; }
+.dark-mode .sidebar .nav a.active { background:#3f51b5; box-shadow:0 8px 20px rgba(63,81,181,.5); }
+.dark-mode table#downloadsTable thead th { background:#333; color:#fff; }
+.dark-mode table#downloadsTable td { color:#eee; border-color:#555; }
+.dark-mode button { background:#555; color:#fff; }
+
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<header>
+  <h1>Downloads</h1>
+  <div class="profile-bubble-downloads" id="profileBubbleDownloads">
+    <%= username %>
+    <div class="dropdown-downloads" id="profileDropdownDownloads">
+      <a href="/logout">Logout</a>
+      <label><input type="checkbox" id="darkToggleDownloads"> Dark Mode</label>
+    </div>
+  </div>
+</header>
+
+<div class="wrapper-downloads">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="/logo.png" alt="DIGILIB">
+      <h2>DIGILIB</h2>
+    </div>
+    <nav class="nav">
+      <a href="/" class="nav-link">🏠 Dashboard</a>
+      <a href="/favorites" class="nav-link">⭐ Favorites</a>
+      <a href="/downloads" class="nav-link active">⬇ Downloads</a>
+      <a href="/user/analytics" class="nav-link">📊 Analytics</a>
+    </nav>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content-downloads">
+
+    <div class="card-downloads">
+      <h2>Downloaded Files</h2>
+
+      <div class="table-wrapper-downloads">
+        <table id="downloadsTable">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Date Downloaded</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% files.forEach(file => { %>
+            <tr>
+              <td><%= file.title %></td>
+              <td><%= new Date(file.downloaded_at).toLocaleString() %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // Profile dropdown toggle (unique)
+  const bubble = document.getElementById('profileBubbleDownloads');
+  const dropdown = document.getElementById('profileDropdownDownloads');
+  bubble.onclick = () => {
+    dropdown.style.display = dropdown.style.display==='block'?'none':'block';
+  };
+
+  // Dark mode toggle (unique)
+  const darkToggle = document.getElementById('darkToggleDownloads');
+  darkToggle.onchange = () => {
+    document.body.classList.toggle('dark-mode', darkToggle.checked);
+  };
+  window.addEventListener('pageshow', function (event) {
+  if (event.persisted) {
+    // Page was loaded from back/forward cache
+    window.location.reload();
+  }
+});
+</script>
+
+</body>
+</html>
