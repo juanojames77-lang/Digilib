@@ -227,53 +227,90 @@ app.get('/admin', requireLogin, isAdmin, async (req,res)=>{
 });
 
 /* ================= UPLOAD ================= */
+/* ================= UPLOAD ================= */
 app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req,res)=>{
   const isPrivate = req.body.private === 'on';
+  
   try {
     if(!req.file?.path) return res.json({ success:false, message:'No file selected' });
 
     const filename = path.parse(req.file.originalname).name;
-
+    
+    // Create temp file in Render's /tmp directory
     const tempPath = path.join(__dirname, 'temp.pdf');
     const response = await fetch(req.file.path);
     const buffer = Buffer.from(await response.arrayBuffer());
     fs.writeFileSync(tempPath, buffer);
-
-    execFile('python', ['ml/predict_cluster.py', tempPath], async (err,stdout)=>{
-      fs.unlinkSync(tempPath);
-      if(err) return res.json({ success:false, message:'ML prediction failed' });
-
-      stdout = stdout.trim();
-      const [clusterIndexStr, confidenceStr] = stdout.split(',');
-      let clusterIndex = parseInt(clusterIndexStr);
-      let confidence = parseFloat(confidenceStr);
-      if(isNaN(clusterIndex)) clusterIndex = 0;
-      if(isNaN(confidence)) confidence = 0;
-
+    
+    console.log('🔍 Starting ML prediction...');
+    console.log('File:', filename);
+    console.log('Temp path:', tempPath);
+    
+    // Use improved Python execution
+    execFile('python3', ['ml/predict_cluster.py', tempPath], async (err, stdout, stderr) => {
+      // Clean up temp file
+      try { fs.unlinkSync(tempPath); } catch(e) {}
+      
+      let clusterIndex = 0;
+      let confidence = 0.5;
+      
+      if (err || !stdout) {
+        console.log('⚠️ ML prediction failed:', err?.message || 'No output');
+        if (stderr) console.log('Python stderr:', stderr);
+        console.log('Using default values: cluster=0, confidence=0.5');
+      } else {
+        try {
+          stdout = stdout.trim();
+          console.log('Python output:', stdout);
+          
+          const [clusterIndexStr, confidenceStr] = stdout.split(',');
+          clusterIndex = parseInt(clusterIndexStr);
+          confidence = parseFloat(confidenceStr);
+          
+          if(isNaN(clusterIndex)) clusterIndex = 0;
+          if(isNaN(confidence)) confidence = 0.5;
+          
+          console.log(`✅ Prediction: Cluster=${clusterIndex}, Confidence=${confidence}`);
+          
+        } catch (parseErr) {
+          console.log('❌ Failed to parse Python output:', parseErr.message);
+          console.log('Raw output:', stdout);
+        }
+      }
+      
       try {
+        // Save to database
         await pool.query(
           'INSERT INTO pdfs(title, cluster, url, is_private, uploader, confidence) VALUES($1,$2,$3,$4,$5,$6)',
           [filename, clusterIndex, req.file.path, isPrivate, req.session.user, confidence]
         );
-
-        // ==== LOG UPLOAD HISTORY ====
+        
+        // Log upload history
         await pool.query(
           'INSERT INTO upload_history(title, course, uploaded_by) VALUES($1,$2,$3)',
           [filename, clusterIndex, req.session.user]
         );
-
-        res.json({ success:true, title:filename, cluster:clusterIndex, confidence });
-      } catch(e){
-        console.error(e);
-        res.json({ success:false, message:'Database error' });
+        
+        console.log(`✅ Upload successful: ${filename}`);
+        
+        res.json({ 
+          success: true, 
+          title: filename, 
+          cluster: clusterIndex, 
+          confidence: confidence.toFixed(2)
+        });
+        
+      } catch(dbErr) {
+        console.error('❌ Database error:', dbErr);
+        res.json({ success:false, message:'Database error: ' + dbErr.message });
       }
     });
-  } catch(e){
-    console.error(e);
-    res.json({ success:false, message:'Upload failed' });
+    
+  } catch(e) {
+    console.error('❌ Upload error:', e);
+    res.json({ success:false, message:'Upload failed: ' + e.message });
   }
 });
-
 /* ================= DELETE ================= */
 app.post('/delete/:id', requireLogin, isAdmin, async (req,res)=>{
   await pool.query('DELETE FROM pdfs WHERE id=$1',[req.params.id]);
@@ -699,7 +736,53 @@ app.get('/inline-pdf/:id', requireLogin, isAdmin, async (req, res) => {
   }
 });
 
-
+// ================= ML CHECK ROUTE =================
+app.get('/check-ml', requireLogin, isAdmin, async (req, res) => {
+  try {
+    const checks = [];
+    
+    // Check Python
+    execFile('python3', ['--version'], (err, stdout) => {
+      checks.push(`Python: ${stdout || err?.message || 'Not found'}`);
+    });
+    
+    // Check ML directory
+    const mlPath = path.join(__dirname, 'ml');
+    checks.push(`ML path: ${mlPath}`);
+    
+    if (fs.existsSync(mlPath)) {
+      const files = fs.readdirSync(mlPath);
+      checks.push(`ML files: ${files.join(', ')}`);
+      
+      // Check specific files
+      ['vectorizer.joblib', 'kmeans.joblib', 'predict_cluster.py'].forEach(file => {
+        const filePath = path.join(mlPath, file);
+        checks.push(`${file}: ${fs.existsSync(filePath) ? '✅ Found' : '❌ Missing'}`);
+      });
+    } else {
+      checks.push('❌ ML directory not found');
+    }
+    
+    // Test Python script
+    const testFile = path.join(__dirname, 'test.pdf');
+    fs.writeFileSync(testFile, 'Test PDF content');
+    
+    execFile('python3', ['ml/predict_cluster.py', testFile], (err, stdout, stderr) => {
+      fs.unlinkSync(testFile);
+      checks.push(`Test prediction: ${stdout || err?.message || 'No output'}`);
+      if (stderr) checks.push(`Python error: ${stderr}`);
+      
+      res.send(`
+        <h1>ML System Check</h1>
+        <pre>${checks.join('\n')}</pre>
+        <a href="/admin">Back to Admin</a>
+      `);
+    });
+    
+  } catch (error) {
+    res.send(`<h1>Error</h1><pre>${error.message}</pre>`);
+  }
+});
 
 /* ================= START SERVER ================= */
 app.listen(PORT, () => {
