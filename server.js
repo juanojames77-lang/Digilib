@@ -14,7 +14,7 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 
 const app = express();
 const PORT = process.env.PORT || 3000; // ✅ CHANGED FOR RENDER
-
+app.set('trust proxy', 1);
 /* ================= CONFIG ================= */
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
@@ -22,16 +22,28 @@ app.use(express.json());
 app.use(express.static('public'));
 
 /* ================= SESSION ================= */
-app.use(session({
+/* ================= SESSION ================= */
+const sessionConfig = {
   secret: process.env.SESSION_SECRET || 'digilib-secret-key-change-me',
   resave: false,
   saveUninitialized: false,
   cookie: { 
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000
-  }
-}));
+    secure: process.env.NODE_ENV === 'production', // TRUE on Render
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax' // IMPORTANT for cross-site
+  },
+  proxy: true // ✅ ADD THIS
+};
+
+// Only enable secure cookies and proxy in production
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+  sessionConfig.cookie.secure = true;
+  sessionConfig.proxy = true;
+}
+
+app.use(session(sessionConfig));
 
 /* ================= NO-CACHE ================= */
 app.use((req, res, next) => {
@@ -148,6 +160,7 @@ app.post('/register', async (req, res) => {
 });
 
 // LOGOUT
+// LOGOUT - FIXED
 app.get('/logout', (req, res) => {
   req.session.destroy(err => {
     if (err) {
@@ -155,16 +168,16 @@ app.get('/logout', (req, res) => {
       return res.redirect('/login');
     }
 
-    // 🔥 clear session cookie
-    res.clearCookie('connect.sid');
-
-    // 🔥 extra safety (optional but recommended)
-    res.setHeader('Clear-Site-Data', '"cache", "cookies", "storage"');
-
+    // ✅ Clear the correct cookie (session name)
+    res.clearCookie('connect.sid'); // Default name
+    
+    // If you want to be extra sure, clear all possibilities:
+    res.clearCookie('digilib.sid');
+    res.clearCookie('sessionId');
+    
     res.redirect('/login');
   });
 });
-
 
 // HOME (USER DASHBOARD)
 app.get('/', requireLogin, async (req,res)=>{
