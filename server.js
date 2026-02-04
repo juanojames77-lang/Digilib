@@ -227,56 +227,54 @@ app.get('/admin', requireLogin, isAdmin, async (req,res)=>{
 });
 
 /* ================= UPLOAD ================= */
-app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req, res) => {
+/* ================= UPLOAD ================= */
+app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req,res)=>{
   const isPrivate = req.body.private === 'on';
   
   try {
-    if (!req.file?.path) {
-      return res.json({ success: false, message: 'No file selected' });
-    }
+    if(!req.file?.path) return res.json({ success:false, message:'No file selected' });
 
     const filename = path.parse(req.file.originalname).name;
     
-    // Download PDF from Cloudinary to temp file
-    const tempPath = '/tmp/temp_upload.pdf';
+    // Create temp file in /tmp (Docker writable directory)
+    const tempPath = '/tmp/temp.pdf';
     const response = await fetch(req.file.path);
     const buffer = Buffer.from(await response.arrayBuffer());
     fs.writeFileSync(tempPath, buffer);
     
-    console.log(`📤 Starting ML for: ${filename}`);
+    console.log('🔍 Starting ML prediction for:', filename);
     
-    // Run Python ML script with timeout
+    // Use python3 (not python)
     execFile('python3', ['ml/predict_cluster.py', tempPath], 
-      { timeout: 30000 }, // 30 second timeout
+      { timeout: 15000 }, // 15 second timeout
       async (err, stdout, stderr) => {
         
         // Clean up temp file
-        try { fs.unlinkSync(tempPath); } catch (e) {}
-        
-        // Log Python output
-        if (stdout) console.log(`📊 ML Output: ${stdout.trim()}`);
-        if (stderr) console.log(`📝 ML Errors: ${stderr}`);
-        if (err) console.log(`💥 ML Process Error: ${err.message}`);
+        try { fs.unlinkSync(tempPath); } catch(e) {}
         
         let clusterIndex = 0;
         let confidence = 0.5;
         
-        // Parse ML output
+        console.log('📊 Python output:', stdout || 'No output');
+        if (stderr) console.log('📝 Python errors:', stderr);
+        if (err) console.log('💥 Python process error:', err.message);
+        
         if (stdout) {
           try {
-            const parts = stdout.trim().split(',');
+            stdout = stdout.trim();
+            const parts = stdout.split(',');
             if (parts.length >= 2) {
               clusterIndex = parseInt(parts[0]) || 0;
               confidence = parseFloat(parts[1]) || 0.5;
               
-              // Validate
+              // Validate ranges
               clusterIndex = Math.max(0, Math.min(5, clusterIndex));
               confidence = Math.max(0.1, Math.min(1.0, confidence));
               
               console.log(`✅ ML Prediction: Cluster ${clusterIndex}, Confidence ${confidence}`);
             }
           } catch (parseErr) {
-            console.log(`❌ Parse error: ${parseErr.message}`);
+            console.log('❌ Failed to parse output:', parseErr.message);
           }
         }
         
@@ -292,26 +290,25 @@ app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req, res
             [filename, clusterIndex, req.session.user]
           );
           
-          console.log(`✅ Upload complete: ${filename}`);
+          console.log(`✅ Upload successful: ${filename} -> Cluster ${clusterIndex}`);
           
           res.json({ 
             success: true, 
             title: filename, 
             cluster: clusterIndex, 
-            confidence: confidence.toFixed(2),
-            message: 'Upload successful'
+            confidence: confidence.toFixed(2)
           });
           
-        } catch (dbErr) {
+        } catch(dbErr) {
           console.error('❌ Database error:', dbErr);
-          res.json({ success: false, message: 'Database error' });
+          res.json({ success:false, message:'Database error' });
         }
       }
     );
     
-  } catch (e) {
+  } catch(e) {
     console.error('❌ Upload error:', e);
-    res.json({ success: false, message: 'Upload failed' });
+    res.json({ success:false, message:'Upload failed' });
   }
 });
 /* ================= DELETE ================= */
@@ -843,41 +840,29 @@ app.get('/ml-check', requireLogin, isAdmin, async (req, res) => {
   }
 });
 
-// Debug route for pdfplumber
-app.get('/test-pdfplumber', (req, res) => {
-  const { exec } = require('child_process');
-  
-  let html = '<h1>pdfplumber Test</h1><style>pre{background:#f0f0f0;padding:10px}</style>';
-  
-  // Test 1: Check Python
-  exec('python3 --version', (err, stdout) => {
-    html += `<h2>Python Version:</h2><pre>${stdout || err?.message}</pre>`;
-    
-    // Test 2: Check installed packages
-    exec('pip3 list | grep -E "(pdfplumber|joblib|scikit|numpy)"', (err, stdout) => {
-      html += `<h2>Installed Packages:</h2><pre>${stdout || 'Not found'}</pre>`;
-      
-      // Test 3: Test pdfplumber import
-      exec('python3 -c "import pdfplumber; print(\\"pdfplumber version:\\", pdfplumber.__version__)"', 
-        (err, stdout, stderr) => {
-          html += `<h2>pdfplumber Import Test:</h2><pre>${stdout || stderr || err?.message}</pre>`;
-          
-          // Test 4: Run ML script
-          const fs = require('fs');
-          fs.writeFileSync('/tmp/test.pdf', 'computer science programming');
-          exec('python3 ml/predict_cluster.py /tmp/test.pdf', 
-            (err, stdout, stderr) => {
-              html += `<h2>ML Script Test:</h2>`;
-              html += `<h3>Output:</h3><pre>${stdout || 'None'}</pre>`;
-              html += `<h3>Logs:</h3><pre>${stderr || 'None'}</pre>`;
-              
-              res.send(html);
-            }
-          );
-        }
-      );
-    });
-  });
+// ================= TEST UPLOAD PAGE =================
+app.get('/upload-test', requireLogin, isAdmin, (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial; padding: 40px; }
+        form { margin: 20px 0; }
+        input { padding: 10px; margin: 10px; }
+      </style>
+    </head>
+    <body>
+      <h1>Test ML Upload</h1>
+      <form action="/upload" method="POST" enctype="multipart/form-data">
+        <input type="file" name="pdf" accept=".pdf" required><br>
+        <label><input type="checkbox" name="private"> Private</label><br>
+        <button type="submit">Upload Test PDF</button>
+      </form>
+      <p><a href="/ml-check">← Back to ML Check</a></p>
+    </body>
+    </html>
+  `);
 });
 /* ================= START SERVER ================= */
 app.listen(PORT, () => {
