@@ -7,7 +7,7 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "build": "npm run install-python-deps",
-    "install-python-deps": "python3 -m pip install pypdf joblib scikit-learn numpy",
+    "install-python-deps": "python3 -m pip install pypdf PyPDF2 joblib scikit-learn numpy",
     "test-python": "python3 -c \"import pypdf; print('pypdf version:', pypdf.__version__)\"",
     "test-ml": "echo 'computer science' > test.pdf && python3 ml/predict_cluster.py test.pdf"
   },

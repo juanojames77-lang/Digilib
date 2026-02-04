@@ -1,71 +1,104 @@
-# ================= ml/predict_cluster.py =================
+#!/usr/bin/env python3
+"""
+ML Model for PDF Cluster Prediction
+Uses vectorizer.joblib and kmeans.joblib
+"""
 import sys
 import os
 import warnings
 
-# Suppress ALL warnings
+# Suppress warnings
 warnings.filterwarnings("ignore")
 
+def log(message):
+    """Log to stderr for debugging"""
+    print(f"[ML] {message}", file=sys.stderr, flush=True)
+
 def main():
-    # Default fallback values
-    default_cluster = 0
-    default_confidence = 0.5
+    # Default values if ML fails
+    DEFAULT_CLUSTER = 0
+    DEFAULT_CONFIDENCE = 0.5
     
     try:
+        log("🚀 Starting ML prediction")
+        
         # 1. Check arguments
         if len(sys.argv) < 2:
-            print(f"{default_cluster},{default_confidence}")
+            log("❌ Error: No PDF path provided")
+            print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
         pdf_path = sys.argv[1]
+        log(f"📄 Processing: {pdf_path}")
         
         # 2. Check if file exists
         if not os.path.exists(pdf_path):
-            print(f"{default_cluster},{default_confidence}")
+            log(f"❌ Error: File not found")
+            print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
-        # 3. Import dependencies
+        # 3. IMPORT PDF LIBRARY - FIXED!
         try:
-            from PyPDF2 import PdfReader
+            # Try pypdf first (new package name - what you installed)
+            from pypdf import PdfReader
+            log("✅ Using pypdf")
+        except ImportError:
+            try:
+                # Fallback to PyPDF2 (old package name)
+                from PyPDF2 import PdfReader
+                log("✅ Using PyPDF2 (fallback)")
+            except ImportError as e:
+                log(f"❌ No PDF library found: {e}")
+                log("💡 Install with: python3 -m pip install pypdf")
+                print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
+                return
+        
+        # 4. IMPORT ML LIBRARIES
+        try:
             import joblib
             from sklearn.metrics import pairwise_distances_argmin_min
+            log("✅ ML libraries imported")
         except ImportError as e:
-            print(f"{default_cluster},{default_confidence}")
-            print(f"Import error: {e}", file=sys.stderr)
+            log(f"❌ ML libraries failed: {e}")
+            print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
-        # 4. Find model files
+        # 5. CHECK MODEL FILES EXIST
         current_dir = os.path.dirname(os.path.abspath(__file__))
         vectorizer_path = os.path.join(current_dir, 'vectorizer.joblib')
         kmeans_path = os.path.join(current_dir, 'kmeans.joblib')
         
-        # 5. Check if models exist
         if not os.path.exists(vectorizer_path):
-            print(f"{default_cluster},{default_confidence}")
-            print(f"Model not found: {vectorizer_path}", file=sys.stderr)
-            return
-            
-        if not os.path.exists(kmeans_path):
-            print(f"{default_cluster},{default_confidence}")
-            print(f"Model not found: {kmeans_path}", file=sys.stderr)
+            log(f"❌ vectorizer.joblib not found")
+            print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
-        # 6. Load models
+        if not os.path.exists(kmeans_path):
+            log(f"❌ kmeans.joblib not found")
+            print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
+            return
+        
+        log(f"✅ Models found")
+        
+        # 6. LOAD YOUR ML MODELS
         try:
             vectorizer = joblib.load(vectorizer_path)
             kmeans = joblib.load(kmeans_path)
+            log(f"✅ Model loaded")
         except Exception as e:
-            print(f"{default_cluster},{default_confidence}")
-            print(f"Error loading models: {e}", file=sys.stderr)
+            log(f"❌ Error loading models: {e}")
+            print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
-        # 7. Extract text from PDF
+        # 7. EXTRACT TEXT FROM PDF
         try:
             reader = PdfReader(pdf_path)
             text = ""
             
-            # Read first 5 pages max
-            for i in range(min(5, len(reader.pages))):
+            # Read first 3 pages
+            pages_to_read = min(3, len(reader.pages))
+            
+            for i in range(pages_to_read):
                 try:
                     page_text = reader.pages[i].extract_text()
                     if page_text:
@@ -73,19 +106,18 @@ def main():
                 except:
                     continue
             
-            # If no text, use placeholder
             if not text.strip():
-                text = "academic research thesis dissertation study paper document"
+                text = "academic research thesis"
+                log("⚠️ No text extracted, using placeholder")
             
-            # Limit text length
-            text = text[:3000]
+            log(f"📝 Extracted {len(text)} characters")
             
         except Exception as e:
-            print(f"{default_cluster},{default_confidence}")
-            print(f"Error reading PDF: {e}", file=sys.stderr)
+            log(f"❌ PDF reading error: {e}")
+            print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
-        # 8. Make prediction
+        # 8. USE YOUR ML MODEL FOR PREDICTION
         try:
             X = vectorizer.transform([text])
             cluster = kmeans.predict(X)[0]
@@ -98,18 +130,18 @@ def main():
             # Ensure cluster is 0-5
             cluster = max(0, min(5, cluster))
             
-            # Format output
+            log(f"🎯 Prediction: Cluster {cluster}, Confidence {confidence:.2f}")
             print(f"{cluster},{confidence:.2f}")
             
         except Exception as e:
-            print(f"{default_cluster},{default_confidence}")
-            print(f"Error in prediction: {e}", file=sys.stderr)
+            log(f"❌ Prediction error: {e}")
+            print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
             
     except Exception as e:
-        # Ultimate fallback
-        print(f"{default_cluster},{default_confidence}")
-        print(f"Unexpected error: {e}", file=sys.stderr)
+        log(f"💥 Unexpected error: {e}")
+        print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
 
 if __name__ == "__main__":
     main()
+    log("🏁 ML script finished")
