@@ -737,7 +737,7 @@ app.get('/inline-pdf/:id', requireLogin, isAdmin, async (req, res) => {
 });
 
 // ================= ML DIAGNOSTIC ROUTE =================
-app.get('/ml-check', requireLogin, isAdmin, async (req, res) => {
+app.get('/model-check', requireLogin, isAdmin, async (req, res) => {
   try {
     let checks = [];
     
