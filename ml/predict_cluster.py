@@ -1,117 +1,169 @@
-# ================= ml/predict_cluster.py =================
+#!/usr/bin/env python3
+"""
+ML Model for PDF Cluster Prediction
+Uses vectorizer.joblib and kmeans.joblib
+"""
 import sys
 import os
 import warnings
+import traceback
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
 
+def log(message):
+    """Log to stderr for debugging"""
+    print(f"[ML] {message}", file=sys.stderr, flush=True)
+
 def main():
-    # Default fallback
-    default_cluster = 0
-    default_confidence = 0.5
+    # Default values if ML fails
+    DEFAULT_CLUSTER = 0
+    DEFAULT_CONFIDENCE = 0.5
     
     try:
-        # 1. Check PDF path
+        log("Starting ML prediction")
+        
+        # 1. Check arguments
         if len(sys.argv) < 2:
-            print(f"{default_cluster},{default_confidence}")
+            log("Error: No PDF path provided")
+            print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
         pdf_path = sys.argv[1]
+        log(f"Processing: {pdf_path}")
         
-        # 2. Try to import PDF reader (TRY BOTH pypdf and PyPDF2)
+        # 2. Check if file exists
+        if not os.path.exists(pdf_path):
+            log(f"Error: File not found: {pdf_path}")
+            print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
+            return
+        
+        # 3. IMPORT PYPDF FOR READING PDF
         try:
-            # First try pypdf (new package name)
             from pypdf import PdfReader
-            print("✅ Using pypdf", file=sys.stderr)
+            log("Success: pypdf imported")
         except ImportError:
             try:
-                # Fallback to PyPDF2 (old package name)
                 from PyPDF2 import PdfReader
-                print("✅ Using PyPDF2", file=sys.stderr)
-            except ImportError:
-                print("❌ Neither pypdf nor PyPDF2 found", file=sys.stderr)
-                print(f"{default_cluster},{default_confidence}")
+                log("Success: PyPDF2 imported")
+            except ImportError as e:
+                log(f"Error: No PDF library found: {e}")
+                print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
                 return
         
-        # 3. Import ML libraries
+        # 4. IMPORT ML LIBRARIES
         try:
             import joblib
             from sklearn.metrics import pairwise_distances_argmin_min
+            log("Success: ML libraries imported")
         except ImportError as e:
-            print(f"❌ ML import error: {e}", file=sys.stderr)
-            print(f"{default_cluster},{default_confidence}")
+            log(f"Error: ML libraries failed: {e}")
+            print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
-        # 4. Check model files
+        # 5. CHECK MODEL FILES EXIST
         current_dir = os.path.dirname(os.path.abspath(__file__))
         vectorizer_path = os.path.join(current_dir, 'vectorizer.joblib')
         kmeans_path = os.path.join(current_dir, 'kmeans.joblib')
         
+        log(f"Looking for models in: {current_dir}")
+        log(f"Vectorizer: {vectorizer_path}")
+        log(f"KMeans: {kmeans_path}")
+        
         if not os.path.exists(vectorizer_path):
-            print(f"❌ Vectorizer missing: {vectorizer_path}", file=sys.stderr)
-            print(f"{default_cluster},{default_confidence}")
+            log(f"Error: vectorizer.joblib not found")
+            print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
-            
+        
         if not os.path.exists(kmeans_path):
-            print(f"❌ KMeans missing: {kmeans_path}", file=sys.stderr)
-            print(f"{default_cluster},{default_confidence}")
+            log(f"Error: kmeans.joblib not found")
+            print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
-        # 5. Load models
+        log(f"Models found: {os.path.getsize(vectorizer_path)} bytes, {os.path.getsize(kmeans_path)} bytes")
+        
+        # 6. LOAD YOUR ML MODELS
         try:
+            log("Loading vectorizer...")
             vectorizer = joblib.load(vectorizer_path)
+            
+            log("Loading KMeans...")
             kmeans = joblib.load(kmeans_path)
+            
+            log(f"Model loaded: {kmeans.n_clusters} clusters")
         except Exception as e:
-            print(f"❌ Error loading models: {e}", file=sys.stderr)
-            print(f"{default_cluster},{default_confidence}")
+            log(f"Error loading models: {e}")
+            print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
-        # 6. Read PDF text
+        # 7. EXTRACT TEXT FROM PDF
         try:
+            log("Reading PDF...")
             reader = PdfReader(pdf_path)
             text = ""
             
-            # Read first 2 pages
-            for i in range(min(2, len(reader.pages))):
+            # Read first 3 pages or all if less
+            pages_to_read = min(3, len(reader.pages))
+            log(f"PDF has {len(reader.pages)} pages, reading {pages_to_read}")
+            
+            for i in range(pages_to_read):
                 try:
                     page_text = reader.pages[i].extract_text()
-                    if page_text:
+                    if page_text and page_text.strip():
                         text += page_text + " "
-                except:
+                except Exception as page_err:
+                    log(f"Warning: Page {i} error: {page_err}")
                     continue
             
             if not text.strip():
-                text = "academic research thesis"
-                
+                text = "academic research thesis dissertation paper"
+                log("Warning: Using placeholder text")
+            
+            log(f"Extracted {len(text)} characters")
+            if len(text) > 100:
+                log(f"Sample: {text[:100]}...")
+            
         except Exception as e:
-            print(f"❌ Error reading PDF: {e}", file=sys.stderr)
-            print(f"{default_cluster},{default_confidence}")
+            log(f"Error reading PDF: {e}")
+            print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
-        # 7. Make prediction
+        # 8. USE YOUR ML MODEL FOR PREDICTION
         try:
+            log("Transforming text with vectorizer...")
             X = vectorizer.transform([text])
-            cluster = kmeans.predict(X)[0]
+            log(f"Vector shape: {X.shape}")
             
-            # Calculate confidence
+            log("Predicting cluster with KMeans...")
+            cluster = kmeans.predict(X)[0]
+            log(f"Raw cluster prediction: {cluster}")
+            
+            # Calculate confidence based on distance
             closest, distances = pairwise_distances_argmin_min(X, kmeans.cluster_centers_)
             distance = distances[0]
+            
+            # Convert distance to confidence (0.4 to 0.95)
             confidence = max(0.4, min(0.95, 1.0 - (distance / 20.0)))
             
-            # Ensure cluster is 0-5
+            # Ensure cluster is within 0-5 range
             cluster = max(0, min(5, cluster))
             
-            print(f"{cluster},{confidence:.2f}")
+            log(f"Final prediction: Cluster={cluster}, Distance={distance:.4f}, Confidence={confidence:.4f}")
+            
+            # Output for Node.js (cluster,confidence)
+            print(f"{cluster},{confidence:.4f}")
             
         except Exception as e:
-            print(f"❌ Prediction error: {e}", file=sys.stderr)
-            print(f"{default_cluster},{default_confidence}")
+            log(f"Error in ML prediction: {e}")
+            traceback.print_exc(file=sys.stderr)
+            print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
             
     except Exception as e:
-        print(f"💥 Unexpected error: {e}", file=sys.stderr)
-        print(f"{default_cluster},{default_confidence}")
+        log(f"Unexpected error: {e}")
+        traceback.print_exc(file=sys.stderr)
+        print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
 
 if __name__ == "__main__":
     main()
+    log("ML script finished")

@@ -227,54 +227,56 @@ app.get('/admin', requireLogin, isAdmin, async (req,res)=>{
 });
 
 /* ================= UPLOAD ================= */
-/* ================= UPLOAD ================= */
-app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req,res)=>{
+app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req, res) => {
   const isPrivate = req.body.private === 'on';
   
   try {
-    if(!req.file?.path) return res.json({ success:false, message:'No file selected' });
+    if (!req.file?.path) {
+      return res.json({ success: false, message: 'No file selected' });
+    }
 
     const filename = path.parse(req.file.originalname).name;
     
-    // Create temp file in /tmp (Docker writable directory)
-    const tempPath = '/tmp/temp.pdf';
+    // Download PDF from Cloudinary to temp file
+    const tempPath = '/tmp/temp_upload.pdf';
     const response = await fetch(req.file.path);
     const buffer = Buffer.from(await response.arrayBuffer());
     fs.writeFileSync(tempPath, buffer);
     
-    console.log('🔍 Starting ML prediction for:', filename);
+    console.log(`📤 Starting ML for: ${filename}`);
     
-    // Use python3 (not python)
+    // Run Python ML script with timeout
     execFile('python3', ['ml/predict_cluster.py', tempPath], 
-      { timeout: 15000 }, // 15 second timeout
+      { timeout: 30000 }, // 30 second timeout
       async (err, stdout, stderr) => {
         
         // Clean up temp file
-        try { fs.unlinkSync(tempPath); } catch(e) {}
+        try { fs.unlinkSync(tempPath); } catch (e) {}
+        
+        // Log Python output
+        if (stdout) console.log(`📊 ML Output: ${stdout.trim()}`);
+        if (stderr) console.log(`📝 ML Errors: ${stderr}`);
+        if (err) console.log(`💥 ML Process Error: ${err.message}`);
         
         let clusterIndex = 0;
         let confidence = 0.5;
         
-        console.log('📊 Python output:', stdout || 'No output');
-        if (stderr) console.log('📝 Python errors:', stderr);
-        if (err) console.log('💥 Python process error:', err.message);
-        
+        // Parse ML output
         if (stdout) {
           try {
-            stdout = stdout.trim();
-            const parts = stdout.split(',');
+            const parts = stdout.trim().split(',');
             if (parts.length >= 2) {
               clusterIndex = parseInt(parts[0]) || 0;
               confidence = parseFloat(parts[1]) || 0.5;
               
-              // Validate ranges
+              // Validate
               clusterIndex = Math.max(0, Math.min(5, clusterIndex));
               confidence = Math.max(0.1, Math.min(1.0, confidence));
               
               console.log(`✅ ML Prediction: Cluster ${clusterIndex}, Confidence ${confidence}`);
             }
           } catch (parseErr) {
-            console.log('❌ Failed to parse output:', parseErr.message);
+            console.log(`❌ Parse error: ${parseErr.message}`);
           }
         }
         
@@ -290,25 +292,26 @@ app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req,res)
             [filename, clusterIndex, req.session.user]
           );
           
-          console.log(`✅ Upload successful: ${filename} -> Cluster ${clusterIndex}`);
+          console.log(`✅ Upload complete: ${filename}`);
           
           res.json({ 
             success: true, 
             title: filename, 
             cluster: clusterIndex, 
-            confidence: confidence.toFixed(2)
+            confidence: confidence.toFixed(2),
+            message: 'Upload successful'
           });
           
-        } catch(dbErr) {
+        } catch (dbErr) {
           console.error('❌ Database error:', dbErr);
-          res.json({ success:false, message:'Database error' });
+          res.json({ success: false, message: 'Database error' });
         }
       }
     );
     
-  } catch(e) {
+  } catch (e) {
     console.error('❌ Upload error:', e);
-    res.json({ success:false, message:'Upload failed' });
+    res.json({ success: false, message: 'Upload failed' });
   }
 });
 /* ================= DELETE ================= */
@@ -864,37 +867,36 @@ app.get('/upload-test', requireLogin, isAdmin, (req, res) => {
     </html>
   `);
 });
-app.get('/debug-python', async (req, res) => {
+// ========== DEBUG ROUTE ==========
+app.get('/ml-debug', async (req, res) => {
   const { exec } = require('child_process');
   const fs = require('fs');
   
-  let output = "<h1>Python Debug</h1>";
+  let html = '<h1>ML System Debug</h1><style>pre{background:#f0f0f0;padding:10px}</style>';
   
-  // Test 1: Python version
-  exec('python3 --version', (err, stdout) => {
-    output += `<h2>Python Version:</h2><pre>${stdout || err?.message}</pre>`;
+  // Test 1: Python and packages
+  exec('python3 --version && pip3 list', (err, stdout) => {
+    html += `<h2>Python & Packages:</h2><pre>${stdout || err?.message}</pre>`;
     
-    // Test 2: List packages
-    exec('pip3 list', (err, stdout) => {
-      output += `<h2>Installed Packages:</h2><pre>${stdout || 'None'}</pre>`;
-      
-      // Test 3: Check pypdf
-      exec('python3 -c "import pypdf; print(\"PyPDF version:\", pypdf.__version__)"', 
-        (err, stdout, stderr) => {
-          output += `<h2>PyPDF Test:</h2><pre>${stdout || stderr || err?.message}</pre>`;
-          
-          // Test 4: Run ML script
-          fs.writeFileSync('/tmp/test.txt', 'computer science programming');
-          exec('python3 ml/predict_cluster.py /tmp/test.txt', 
-            (err, stdout, stderr) => {
-              output += `<h2>ML Script Test:</h2><pre>Output: ${stdout || 'None'}\nErrors: ${stderr || 'None'}</pre>`;
-              
-              res.send(`<html><body style="font-family: monospace;">${output}</body></html>`);
-            }
-          );
-        }
-      );
-    });
+    // Test 2: Check ML files
+    exec('ls -la ml/ && echo "---" && python3 -c "import os; print(\"Vectorizer exists:\", os.path.exists(\"ml/vectorizer.joblib\")); print(\"KMeans exists:\", os.path.exists(\"ml/kmeans.joblib\"))"', 
+      (err, stdout) => {
+        html += `<h2>ML Files:</h2><pre>${stdout || err?.message}</pre>`;
+        
+        // Test 3: Run ML script
+        fs.writeFileSync('/tmp/test.pdf', 'computer science programming algorithms data structures machine learning');
+        exec('timeout 10 python3 ml/predict_cluster.py /tmp/test.pdf', 
+          (err, stdout, stderr) => {
+            html += `<h2>ML Test Result:</h2>`;
+            html += `<h3>Output:</h3><pre>${stdout || 'None'}</pre>`;
+            html += `<h3>Errors:</h3><pre>${stderr || 'None'}</pre>`;
+            html += `<h3>Exit Code:</h3><pre>${err ? err.code : '0 (Success)'}</pre>`;
+            
+            res.send(html);
+          }
+        );
+      }
+    );
   });
 });
 /* ================= START SERVER ================= */
