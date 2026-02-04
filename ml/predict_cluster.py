@@ -2,12 +2,11 @@
 """
 ML Model for PDF Cluster Prediction
 Uses vectorizer.joblib and kmeans.joblib
-NOW USING PDFPLUMBER FOR BETTER PDF READING
+NOW USING PDFPLUMBER FOR PDF READING
 """
 import sys
 import os
 import warnings
-import traceback
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -22,48 +21,40 @@ def main():
     DEFAULT_CONFIDENCE = 0.5
     
     try:
-        log("Starting ML prediction")
+        log("🚀 Starting ML prediction with pdfplumber")
         
         # 1. Check arguments
         if len(sys.argv) < 2:
-            log("Error: No PDF path provided")
+            log("❌ Error: No PDF path provided")
             print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
         pdf_path = sys.argv[1]
-        log(f"Processing: {pdf_path}")
+        log(f"📄 Processing: {pdf_path}")
         
         # 2. Check if file exists
         if not os.path.exists(pdf_path):
-            log(f"Error: File not found: {pdf_path}")
+            log(f"❌ Error: File not found")
             print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
-        # 3. IMPORT PDFPLUMBER FOR READING PDF (NEW!)
+        # 3. IMPORT PDFPLUMBER
         try:
             import pdfplumber
-            log("✅ Success: pdfplumber imported")
+            log("✅ pdfplumber imported successfully")
         except ImportError as e:
-            log(f"❌ Error: pdfplumber not found: {e}")
-            # Fallback to pypdf if pdfplumber fails
-            try:
-                from pypdf import PdfReader
-                log("⚠️ Using pypdf as fallback")
-                USE_PDFPLUMBER = False
-            except ImportError:
-                log("❌ No PDF library found")
-                print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
-                return
-        else:
-            USE_PDFPLUMBER = True
+            log(f"❌ CRITICAL: pdfplumber not installed: {e}")
+            log("💡 Solution: Add 'pip3 install pdfplumber' to render.yaml buildCommand")
+            print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
+            return
         
         # 4. IMPORT ML LIBRARIES
         try:
             import joblib
             from sklearn.metrics import pairwise_distances_argmin_min
-            log("✅ Success: ML libraries imported")
+            log("✅ ML libraries imported")
         except ImportError as e:
-            log(f"❌ Error: ML libraries failed: {e}")
+            log(f"❌ ML libraries failed: {e}")
             print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
@@ -72,28 +63,26 @@ def main():
         vectorizer_path = os.path.join(current_dir, 'vectorizer.joblib')
         kmeans_path = os.path.join(current_dir, 'kmeans.joblib')
         
-        log(f"Looking for models in: {current_dir}")
-        log(f"Vectorizer: {vectorizer_path}")
-        log(f"KMeans: {kmeans_path}")
+        log(f"📁 Current directory: {current_dir}")
         
         if not os.path.exists(vectorizer_path):
-            log(f"❌ Error: vectorizer.joblib not found")
+            log(f"❌ vectorizer.joblib not found at: {vectorizer_path}")
             print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
         if not os.path.exists(kmeans_path):
-            log(f"❌ Error: kmeans.joblib not found")
+            log(f"❌ kmeans.joblib not found at: {kmeans_path}")
             print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
-        log(f"✅ Models found: {os.path.getsize(vectorizer_path)} bytes, {os.path.getsize(kmeans_path)} bytes")
+        log(f"✅ Models found")
         
         # 6. LOAD YOUR ML MODELS
         try:
-            log("Loading vectorizer...")
+            log("🔄 Loading vectorizer...")
             vectorizer = joblib.load(vectorizer_path)
             
-            log("Loading KMeans...")
+            log("🔄 Loading KMeans...")
             kmeans = joblib.load(kmeans_path)
             
             log(f"✅ Model loaded: {kmeans.n_clusters} clusters")
@@ -104,50 +93,34 @@ def main():
         
         # 7. EXTRACT TEXT FROM PDF USING PDFPLUMBER
         try:
-            log("Reading PDF with pdfplumber...")
+            log("📖 Opening PDF with pdfplumber...")
             text = ""
             
-            if USE_PDFPLUMBER:
-                # USING PDFPLUMBER (BETTER METHOD)
-                with pdfplumber.open(pdf_path) as pdf:
-                    pages_to_read = min(3, len(pdf.pages))
-                    log(f"📄 PDF has {len(pdf.pages)} pages, reading {pages_to_read}")
-                    
-                    for i in range(pages_to_read):
-                        try:
-                            page = pdf.pages[i]
-                            page_text = page.extract_text()
-                            if page_text and page_text.strip():
-                                text += page_text + " "
-                        except Exception as page_err:
-                            log(f"⚠️ Warning: Page {i} error: {page_err}")
-                            continue
-            else:
-                # FALLBACK TO PYPDF
-                from pypdf import PdfReader
-                reader = PdfReader(pdf_path)
-                pages_to_read = min(3, len(reader.pages))
-                log(f"📄 PDF has {len(reader.pages)} pages, reading {pages_to_read}")
+            with pdfplumber.open(pdf_path) as pdf:
+                pages_to_read = min(3, len(pdf.pages))
+                log(f"📄 PDF has {len(pdf.pages)} pages, reading {pages_to_read}")
                 
                 for i in range(pages_to_read):
                     try:
-                        page_text = reader.pages[i].extract_text()
+                        page = pdf.pages[i]
+                        page_text = page.extract_text()
                         if page_text and page_text.strip():
                             text += page_text + " "
+                            log(f"✅ Page {i+1}: {len(page_text)} chars")
                     except Exception as page_err:
-                        log(f"⚠️ Warning: Page {i} error: {page_err}")
+                        log(f"⚠️ Page {i+1} error: {page_err}")
                         continue
             
             if not text.strip():
                 text = "academic research thesis dissertation paper"
-                log("⚠️ Warning: Using placeholder text")
+                log("⚠️ No text extracted, using placeholder")
             
-            log(f"📝 Extracted {len(text)} characters")
+            log(f"📝 Total extracted: {len(text)} characters")
             if len(text) > 100:
                 log(f"Sample: {text[:100]}...")
             
         except Exception as e:
-            log(f"❌ Error reading PDF: {e}")
+            log(f"❌ PDF reading error: {e}")
             print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
@@ -159,7 +132,6 @@ def main():
             
             log("🧠 Predicting cluster with KMeans...")
             cluster = kmeans.predict(X)[0]
-            log(f"Raw cluster prediction: {cluster}")
             
             # Calculate confidence based on distance
             closest, distances = pairwise_distances_argmin_min(X, kmeans.cluster_centers_)
@@ -171,22 +143,24 @@ def main():
             # Ensure cluster is within 0-5 range
             cluster = max(0, min(5, cluster))
             
-            log(f"🎯 Final prediction: Cluster={cluster}, Distance={distance:.4f}, Confidence={confidence:.4f}")
+            log(f"🎯 FINAL PREDICTION: Cluster {cluster}, Confidence {confidence:.2f}")
             
             # Output for Node.js (cluster,confidence)
-            print(f"{cluster},{confidence:.4f}")
+            print(f"{cluster},{confidence:.2f}")
             
         except Exception as e:
-            log(f"❌ Error in ML prediction: {e}")
+            log(f"❌ Prediction error: {e}")
+            import traceback
             traceback.print_exc(file=sys.stderr)
             print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
             
     except Exception as e:
         log(f"💥 Unexpected error: {e}")
+        import traceback
         traceback.print_exc(file=sys.stderr)
         print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
 
 if __name__ == "__main__":
     main()
-    log("✅ ML script finished")
+    log("🏁 ML script finished")

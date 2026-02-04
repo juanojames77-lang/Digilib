@@ -843,36 +843,41 @@ app.get('/ml-check', requireLogin, isAdmin, async (req, res) => {
   }
 });
 
+// Debug route for pdfplumber
 app.get('/test-pdfplumber', (req, res) => {
   const { exec } = require('child_process');
-  const fs = require('fs');
   
-  // Create a simple text file (not PDF for this test)
-  fs.writeFileSync('/tmp/test.txt', 'test content');
+  let html = '<h1>pdfplumber Test</h1><style>pre{background:#f0f0f0;padding:10px}</style>';
   
-  // Use a simpler test command
-  exec('python3 -c "import pdfplumber; print(pdfplumber.__version__)"', 
-    (err, stdout, stderr) => {
-      let html = '<h1>PDFPlumber Test</h1>';
+  // Test 1: Check Python
+  exec('python3 --version', (err, stdout) => {
+    html += `<h2>Python Version:</h2><pre>${stdout || err?.message}</pre>`;
+    
+    // Test 2: Check installed packages
+    exec('pip3 list | grep -E "(pdfplumber|joblib|scikit|numpy)"', (err, stdout) => {
+      html += `<h2>Installed Packages:</h2><pre>${stdout || 'Not found'}</pre>`;
       
-      if (stdout) {
-        html += `<h2>✅ Success:</h2><pre>pdfplumber version: ${stdout}</pre>`;
-      } else {
-        html += `<h2>❌ Failed:</h2><pre>${stderr || err?.message || 'Unknown error'}</pre>`;
-      }
-      
-      // Also test pip list
-      exec('pip3 list | grep pdfplumber', (err2, stdout2) => {
-        html += `<h2>Installed Packages:</h2><pre>${stdout2 || 'Not found'}</pre>`;
-        
-        // Test actual ML script
-        exec('python3 ml/predict_cluster.py /tmp/test.txt', (err3, stdout3, stderr3) => {
-          html += `<h2>ML Script Test:</h2><pre>Output: ${stdout3 || 'None'}\nErrors: ${stderr3 || 'None'}</pre>`;
-          res.send(html);
-        });
-      });
-    }
-  );
+      // Test 3: Test pdfplumber import
+      exec('python3 -c "import pdfplumber; print(\\"pdfplumber version:\\", pdfplumber.__version__)"', 
+        (err, stdout, stderr) => {
+          html += `<h2>pdfplumber Import Test:</h2><pre>${stdout || stderr || err?.message}</pre>`;
+          
+          // Test 4: Run ML script
+          const fs = require('fs');
+          fs.writeFileSync('/tmp/test.pdf', 'computer science programming');
+          exec('python3 ml/predict_cluster.py /tmp/test.pdf', 
+            (err, stdout, stderr) => {
+              html += `<h2>ML Script Test:</h2>`;
+              html += `<h3>Output:</h3><pre>${stdout || 'None'}</pre>`;
+              html += `<h3>Logs:</h3><pre>${stderr || 'None'}</pre>`;
+              
+              res.send(html);
+            }
+          );
+        }
+      );
+    });
+  });
 });
 /* ================= START SERVER ================= */
 app.listen(PORT, () => {
