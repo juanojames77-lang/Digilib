@@ -236,79 +236,79 @@ app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req,res)
 
     const filename = path.parse(req.file.originalname).name;
     
-    // Create temp file in Render's /tmp directory
-    const tempPath = path.join(__dirname, 'temp.pdf');
+    // Create temp file in /tmp (Docker writable directory)
+    const tempPath = '/tmp/temp.pdf';
     const response = await fetch(req.file.path);
     const buffer = Buffer.from(await response.arrayBuffer());
     fs.writeFileSync(tempPath, buffer);
     
-    console.log('🔍 Starting ML prediction...');
-    console.log('File:', filename);
-    console.log('Temp path:', tempPath);
+    console.log('🔍 Starting ML prediction for:', filename);
     
-    // Use improved Python execution
-    execFile('python3', ['ml/predict_cluster.py', tempPath], async (err, stdout, stderr) => {
-      // Clean up temp file
-      try { fs.unlinkSync(tempPath); } catch(e) {}
-      
-      let clusterIndex = 0;
-      let confidence = 0.5;
-      
-      if (err || !stdout) {
-        console.log('⚠️ ML prediction failed:', err?.message || 'No output');
-        if (stderr) console.log('Python stderr:', stderr);
-        console.log('Using default values: cluster=0, confidence=0.5');
-      } else {
+    // Use python3 (not python)
+    execFile('python3', ['ml/predict_cluster.py', tempPath], 
+      { timeout: 15000 }, // 15 second timeout
+      async (err, stdout, stderr) => {
+        
+        // Clean up temp file
+        try { fs.unlinkSync(tempPath); } catch(e) {}
+        
+        let clusterIndex = 0;
+        let confidence = 0.5;
+        
+        console.log('📊 Python output:', stdout || 'No output');
+        if (stderr) console.log('📝 Python errors:', stderr);
+        if (err) console.log('💥 Python process error:', err.message);
+        
+        if (stdout) {
+          try {
+            stdout = stdout.trim();
+            const parts = stdout.split(',');
+            if (parts.length >= 2) {
+              clusterIndex = parseInt(parts[0]) || 0;
+              confidence = parseFloat(parts[1]) || 0.5;
+              
+              // Validate ranges
+              clusterIndex = Math.max(0, Math.min(5, clusterIndex));
+              confidence = Math.max(0.1, Math.min(1.0, confidence));
+              
+              console.log(`✅ ML Prediction: Cluster ${clusterIndex}, Confidence ${confidence}`);
+            }
+          } catch (parseErr) {
+            console.log('❌ Failed to parse output:', parseErr.message);
+          }
+        }
+        
+        // Save to database
         try {
-          stdout = stdout.trim();
-          console.log('Python output:', stdout);
+          await pool.query(
+            'INSERT INTO pdfs(title, cluster, url, is_private, uploader, confidence) VALUES($1,$2,$3,$4,$5,$6)',
+            [filename, clusterIndex, req.file.path, isPrivate, req.session.user, confidence]
+          );
           
-          const [clusterIndexStr, confidenceStr] = stdout.split(',');
-          clusterIndex = parseInt(clusterIndexStr);
-          confidence = parseFloat(confidenceStr);
+          await pool.query(
+            'INSERT INTO upload_history(title, course, uploaded_by) VALUES($1,$2,$3)',
+            [filename, clusterIndex, req.session.user]
+          );
           
-          if(isNaN(clusterIndex)) clusterIndex = 0;
-          if(isNaN(confidence)) confidence = 0.5;
+          console.log(`✅ Upload successful: ${filename} -> Cluster ${clusterIndex}`);
           
-          console.log(`✅ Prediction: Cluster=${clusterIndex}, Confidence=${confidence}`);
+          res.json({ 
+            success: true, 
+            title: filename, 
+            cluster: clusterIndex, 
+            confidence: confidence.toFixed(2)
+          });
           
-        } catch (parseErr) {
-          console.log('❌ Failed to parse Python output:', parseErr.message);
-          console.log('Raw output:', stdout);
+        } catch(dbErr) {
+          console.error('❌ Database error:', dbErr);
+          res.json({ success:false, message:'Database error' });
         }
       }
-      
-      try {
-        // Save to database
-        await pool.query(
-          'INSERT INTO pdfs(title, cluster, url, is_private, uploader, confidence) VALUES($1,$2,$3,$4,$5,$6)',
-          [filename, clusterIndex, req.file.path, isPrivate, req.session.user, confidence]
-        );
-        
-        // Log upload history
-        await pool.query(
-          'INSERT INTO upload_history(title, course, uploaded_by) VALUES($1,$2,$3)',
-          [filename, clusterIndex, req.session.user]
-        );
-        
-        console.log(`✅ Upload successful: ${filename}`);
-        
-        res.json({ 
-          success: true, 
-          title: filename, 
-          cluster: clusterIndex, 
-          confidence: confidence.toFixed(2)
-        });
-        
-      } catch(dbErr) {
-        console.error('❌ Database error:', dbErr);
-        res.json({ success:false, message:'Database error: ' + dbErr.message });
-      }
-    });
+    );
     
   } catch(e) {
     console.error('❌ Upload error:', e);
-    res.json({ success:false, message:'Upload failed: ' + e.message });
+    res.json({ success:false, message:'Upload failed' });
   }
 });
 /* ================= DELETE ================= */
@@ -736,54 +736,134 @@ app.get('/inline-pdf/:id', requireLogin, isAdmin, async (req, res) => {
   }
 });
 
-// ================= ML CHECK ROUTE =================
-app.get('/check-ml', requireLogin, isAdmin, async (req, res) => {
+// ================= ML DIAGNOSTIC ROUTE =================
+app.get('/ml-check', requireLogin, isAdmin, async (req, res) => {
   try {
-    const checks = [];
+    let checks = [];
     
-    // Check Python
-    execFile('python3', ['--version'], (err, stdout) => {
-      checks.push(`Python: ${stdout || err?.message || 'Not found'}`);
-    });
-    
-    // Check ML directory
+    // Check 1: ML directory
     const mlPath = path.join(__dirname, 'ml');
-    checks.push(`ML path: ${mlPath}`);
+    checks.push(`📁 ML Directory: ${mlPath}`);
+    checks.push(`📂 Exists: ${fs.existsSync(mlPath) ? '✅ Yes' : '❌ No'}`);
     
     if (fs.existsSync(mlPath)) {
       const files = fs.readdirSync(mlPath);
-      checks.push(`ML files: ${files.join(', ')}`);
+      checks.push(`📄 Files: ${files.join(', ')}`);
       
-      // Check specific files
+      // Check each file
       ['vectorizer.joblib', 'kmeans.joblib', 'predict_cluster.py'].forEach(file => {
         const filePath = path.join(mlPath, file);
-        checks.push(`${file}: ${fs.existsSync(filePath) ? '✅ Found' : '❌ Missing'}`);
+        if (fs.existsSync(filePath)) {
+          const size = (fs.statSync(filePath).size / 1024).toFixed(1);
+          checks.push(`🔍 ${file}: ✅ Found (${size} KB)`);
+        } else {
+          checks.push(`🔍 ${file}: ❌ Missing`);
+        }
       });
-    } else {
-      checks.push('❌ ML directory not found');
     }
     
-    // Test Python script
-    const testFile = path.join(__dirname, 'test.pdf');
-    fs.writeFileSync(testFile, 'Test PDF content');
-    
-    execFile('python3', ['ml/predict_cluster.py', testFile], (err, stdout, stderr) => {
-      fs.unlinkSync(testFile);
-      checks.push(`Test prediction: ${stdout || err?.message || 'No output'}`);
-      if (stderr) checks.push(`Python error: ${stderr}`);
-      
-      res.send(`
-        <h1>ML System Check</h1>
-        <pre>${checks.join('\n')}</pre>
-        <a href="/admin">Back to Admin</a>
-      `);
+    // Check 2: Python
+    await new Promise((resolve) => {
+      execFile('python3', ['--version'], (err, stdout) => {
+        checks.push(`🐍 Python3: ${stdout ? `✅ ${stdout.trim()}` : `❌ ${err?.message || 'Not found'}`}`);
+        resolve();
+      });
     });
+    
+    // Check 3: Python imports
+    await new Promise((resolve) => {
+      execFile('python3', ['-c', 'import PyPDF2, sklearn, joblib; print("✅ All imports work")'], 
+        (err, stdout) => {
+          checks.push(`📦 Python Imports: ${stdout ? stdout.trim() : `❌ ${err?.message}`}`);
+          resolve();
+        }
+      );
+    });
+    
+    // Check 4: Test ML script
+    await new Promise((resolve) => {
+      const testFile = path.join(__dirname, 'test.pdf');
+      fs.writeFileSync(testFile, 'Computer science machine learning artificial intelligence research thesis');
+      
+      execFile('python3', ['ml/predict_cluster.py', testFile], (err, stdout, stderr) => {
+        fs.unlinkSync(testFile);
+        
+        checks.push(`🧪 ML Test: ${stdout ? `Output: ${stdout.trim()}` : `❌ No output`}`);
+        if (err) checks.push(`💥 Error: ${err.message}`);
+        if (stderr) checks.push(`📝 Logs: ${stderr}`);
+        
+        resolve();
+      });
+    });
+    
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>ML System Check</title>
+        <style>
+          body { font-family: Arial; padding: 40px; background: #f5f5f5; }
+          .container { background: white; padding: 30px; border-radius: 10px; }
+          h1 { color: #333; }
+          pre { background: #f8f9fa; padding: 20px; border-radius: 5px; overflow: auto; }
+          .success { color: green; }
+          .error { color: red; }
+          .btn { background: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>🔍 ML System Diagnostic</h1>
+          <pre>${checks.join('\n')}</pre>
+          
+          <h3>🎯 What to look for:</h3>
+          <ul>
+            <li>✅ All 3 ML files should be "Found"</li>
+            <li>✅ Python3 should show a version number</li>
+            <li>✅ Python Imports should say "All imports work"</li>
+            <li>✅ ML Test should NOT output "0,0.5"</li>
+          </ul>
+          
+          <div style="margin-top: 30px;">
+            <a href="/admin" class="btn">← Back to Admin</a>
+            <a href="/upload-test" class="btn" style="background: #2196F3; margin-left: 10px;">
+              Test Upload
+            </a>
+          </div>
+        </div>
+      </body>
+      </html>
+    `);
     
   } catch (error) {
     res.send(`<h1>Error</h1><pre>${error.message}</pre>`);
   }
 });
 
+// ================= TEST UPLOAD PAGE =================
+app.get('/upload-test', requireLogin, isAdmin, (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial; padding: 40px; }
+        form { margin: 20px 0; }
+        input { padding: 10px; margin: 10px; }
+      </style>
+    </head>
+    <body>
+      <h1>Test ML Upload</h1>
+      <form action="/upload" method="POST" enctype="multipart/form-data">
+        <input type="file" name="pdf" accept=".pdf" required><br>
+        <label><input type="checkbox" name="private"> Private</label><br>
+        <button type="submit">Upload Test PDF</button>
+      </form>
+      <p><a href="/ml-check">← Back to ML Check</a></p>
+    </body>
+    </html>
+  `);
+});
 /* ================= START SERVER ================= */
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
