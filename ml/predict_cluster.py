@@ -3,10 +3,41 @@
 ML Model for PDF Cluster Prediction
 Uses vectorizer.joblib and kmeans.joblib
 NOW USING PDFPLUMBER FOR PDF READING
+WITH ADDED SYSTEM PATHS FOR RENDER
 """
 import sys
 import os
 import warnings
+
+# ========== SOLUTION 4: FORCE ADD RENDER PYTHON PATHS ==========
+# Add common Python package paths where Render installs packages
+sys.path.extend([
+    '/usr/local/lib/python3.9/site-packages',      # System Python 3.9
+    '/usr/local/lib/python3.10/site-packages',     # System Python 3.10  
+    '/usr/local/lib/python3.11/site-packages',     # System Python 3.11
+    '/usr/local/lib/python3.12/site-packages',     # System Python 3.12
+    '/usr/local/lib/python3.13/site-packages',     # System Python 3.13 (your version!)
+    '/usr/lib/python3/dist-packages',              # Ubuntu/Debian system packages
+    '/usr/lib/python3.9/dist-packages',
+    '/home/render/.local/lib/python3.9/site-packages',  # User installs
+    '/home/render/.local/lib/python3.13/site-packages', # User Python 3.13
+    '/opt/render/.local/lib/python3.9/site-packages',   # Render specific
+    '/opt/render/project/src/.local/lib/python3.9/site-packages',
+    '/opt/venv/lib/python3.9/site-packages',       # Virtual environment
+    '/opt/venv/lib/python3.13/site-packages',      # Virtual env Python 3.13
+])
+
+# Debug: Show Python path
+print(f"[ML-DEBUG] Python version: {sys.version}", file=sys.stderr)
+print(f"[ML-DEBUG] Python executable: {sys.executable}", file=sys.stderr)
+print(f"[ML-DEBUG] Current directory: {os.getcwd()}", file=sys.stderr)
+print(f"[ML-DEBUG] Script location: {os.path.dirname(os.path.abspath(__file__))}", file=sys.stderr)
+print(f"[ML-DEBUG] Total paths in sys.path: {len(sys.path)}", file=sys.stderr)
+
+# Check if directories exist
+for path in sys.path:
+    if os.path.exists(path):
+        print(f"[ML-DEBUG] Path exists: {path}", file=sys.stderr)
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -38,13 +69,40 @@ def main():
             print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
-        # 3. IMPORT PDFPLUMBER
+        # 3. IMPORT PDFPLUMBER - WITH EXTRA DEBUGGING
         try:
+            log("🔄 Attempting to import pdfplumber...")
+            
+            # List what's in Python path before import
+            log(f"Python sys.path locations checked: {len(sys.path)}")
+            
             import pdfplumber
-            log("✅ pdfplumber imported successfully")
+            log(f"✅ pdfplumber imported successfully!")
+            log(f"📦 pdfplumber version: {pdfplumber.__version__}")
+            log(f"📁 pdfplumber location: {pdfplumber.__file__}")
+            
         except ImportError as e:
-            log(f"❌ CRITICAL: pdfplumber not installed: {e}")
-            log("💡 Solution: Add 'pip3 install pdfplumber' to render.yaml buildCommand")
+            log(f"❌ CRITICAL: pdfplumber not installed")
+            log(f"💥 Import error details: {e}")
+            log(f"🔍 Python was looking in these paths:")
+            for i, path in enumerate(sys.path[:20]):  # Show first 20 paths
+                log(f"  {i:2d}. {path}")
+            
+            # Try to find where pip installed packages
+            log(f"🔍 Checking common install locations...")
+            common_locations = [
+                '/usr/local/lib/python3.13/site-packages/pdfplumber',
+                '/usr/local/lib/python3.9/site-packages/pdfplumber',
+                '/home/render/.local/lib/python3.13/site-packages/pdfplumber',
+            ]
+            
+            for loc in common_locations:
+                if os.path.exists(loc):
+                    log(f"✅ Found pdfplumber at: {loc}")
+                else:
+                    log(f"❌ Not found at: {loc}")
+            
+            log("💡 Solution: Make sure 'pip3 install pdfplumber' runs in render.yaml buildCommand")
             print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
@@ -53,6 +111,7 @@ def main():
             import joblib
             from sklearn.metrics import pairwise_distances_argmin_min
             log("✅ ML libraries imported")
+            log(f"📦 joblib version: {joblib.__version__}")
         except ImportError as e:
             log(f"❌ ML libraries failed: {e}")
             print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
@@ -64,18 +123,24 @@ def main():
         kmeans_path = os.path.join(current_dir, 'kmeans.joblib')
         
         log(f"📁 Current directory: {current_dir}")
+        log(f"🔍 Looking for vectorizer at: {vectorizer_path}")
+        log(f"🔍 Looking for kmeans at: {kmeans_path}")
         
         if not os.path.exists(vectorizer_path):
-            log(f"❌ vectorizer.joblib not found at: {vectorizer_path}")
+            log(f"❌ vectorizer.joblib not found!")
+            log(f"💡 Make sure vectorizer.joblib is in ml/ directory")
             print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
         if not os.path.exists(kmeans_path):
-            log(f"❌ kmeans.joblib not found at: {kmeans_path}")
+            log(f"❌ kmeans.joblib not found!")
+            log(f"💡 Make sure kmeans.joblib is in ml/ directory")
             print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
         log(f"✅ Models found")
+        log(f"📏 vectorizer size: {os.path.getsize(vectorizer_path)} bytes")
+        log(f"📏 kmeans size: {os.path.getsize(kmeans_path)} bytes")
         
         # 6. LOAD YOUR ML MODELS
         try:
@@ -88,6 +153,8 @@ def main():
             log(f"✅ Model loaded: {kmeans.n_clusters} clusters")
         except Exception as e:
             log(f"❌ Error loading models: {e}")
+            import traceback
+            traceback.print_exc(file=sys.stderr)
             print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
@@ -121,6 +188,8 @@ def main():
             
         except Exception as e:
             log(f"❌ PDF reading error: {e}")
+            import traceback
+            traceback.print_exc(file=sys.stderr)
             print(f"{DEFAULT_CLUSTER},{DEFAULT_CONFIDENCE}")
             return
         
@@ -132,10 +201,12 @@ def main():
             
             log("🧠 Predicting cluster with KMeans...")
             cluster = kmeans.predict(X)[0]
+            log(f"📈 Raw cluster prediction: {cluster}")
             
             # Calculate confidence based on distance
             closest, distances = pairwise_distances_argmin_min(X, kmeans.cluster_centers_)
             distance = distances[0]
+            log(f"📏 Distance to cluster center: {distance:.4f}")
             
             # Convert distance to confidence (0.4 to 0.95)
             confidence = max(0.4, min(0.95, 1.0 - (distance / 20.0)))

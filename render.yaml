@@ -5,11 +5,17 @@ services:
     region: singapore
     plan: free
     buildCommand: |
-      # Install Node.js
+      # 1. Install Node.js
       npm install
       
-      # Install Python packages (Render has Python pre-installed!)
-      pip3 install pdfplumber joblib scikit-learn numpy
+      # 2. Install Python packages (Render has Python pre-installed)
+      python3 -m pip install pdfplumber==0.10.3
+      python3 -m pip install joblib==1.3.2
+      python3 -m pip install scikit-learn==1.3.2
+      python3 -m pip install numpy==1.24.4
+      
+      # 3. Verify installation
+      python3 -c "import pdfplumber; print('SUCCESS: pdfplumber version', pdfplumber.__version__)"
     startCommand: node server.js
     envVars:
       - key: DATABASE_URL
