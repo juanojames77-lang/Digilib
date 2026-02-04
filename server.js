@@ -864,47 +864,36 @@ app.get('/upload-test', requireLogin, isAdmin, (req, res) => {
     </html>
   `);
 });
-// Add this route for debugging
 app.get('/debug-python', async (req, res) => {
   const { exec } = require('child_process');
   const fs = require('fs');
   
-  let output = "<h1>Python Debug Information</h1>";
+  let output = "<h1>Python Debug</h1>";
   
-  // Test 1: Check Python version
+  // Test 1: Python version
   exec('python3 --version', (err, stdout) => {
-    output += `<h2>1. Python Version:</h2><pre>${stdout || err?.message}</pre>`;
+    output += `<h2>Python Version:</h2><pre>${stdout || err?.message}</pre>`;
     
-    // Test 2: Check pip list
+    // Test 2: List packages
     exec('pip3 list', (err, stdout) => {
-      output += `<h2>2. Installed Packages:</h2><pre>${stdout || 'No output'}</pre>`;
+      output += `<h2>Installed Packages:</h2><pre>${stdout || 'None'}</pre>`;
       
-      // Test 3: Check specific packages
-      exec('pip3 list | grep -i "pypdf\|joblib\|sklearn"', (err, stdout) => {
-        output += `<h2>3. ML Packages:</h2><pre>${stdout || 'Not found'}</pre>`;
-        
-        // Test 4: Try to import pypdf
-        exec('python3 -c "import pypdf; print(\"✅ pypdf version:\", pypdf.__version__)"', 
-          (err, stdout, stderr) => {
-            output += `<h2>4. PyPDF Import Test:</h2><pre>${stdout || stderr || err?.message}</pre>`;
-            
-            // Test 5: Check if ml directory exists
-            exec('ls -la ml/', (err, stdout) => {
-              output += `<h2>5. ML Directory Contents:</h2><pre>${stdout || err?.message}</pre>`;
+      // Test 3: Check pypdf
+      exec('python3 -c "import pypdf; print(\"PyPDF version:\", pypdf.__version__)"', 
+        (err, stdout, stderr) => {
+          output += `<h2>PyPDF Test:</h2><pre>${stdout || stderr || err?.message}</pre>`;
+          
+          // Test 4: Run ML script
+          fs.writeFileSync('/tmp/test.txt', 'computer science programming');
+          exec('python3 ml/predict_cluster.py /tmp/test.txt', 
+            (err, stdout, stderr) => {
+              output += `<h2>ML Script Test:</h2><pre>Output: ${stdout || 'None'}\nErrors: ${stderr || 'None'}</pre>`;
               
-              // Test 6: Run predict_cluster.py directly
-              fs.writeFileSync('/tmp/test.pdf', 'computer science test');
-              exec('python3 ml/predict_cluster.py /tmp/test.pdf', 
-                (err, stdout, stderr) => {
-                  output += `<h2>6. Direct ML Script Test:</h2><pre>STDOUT: ${stdout || 'None'}\nSTDERR: ${stderr || 'None'}\nERROR: ${err?.message || 'None'}</pre>`;
-                  
-                  res.send(`<html><body style="font-family: monospace; padding: 20px;">${output}</body></html>`);
-                }
-              );
-            });
-          }
-        );
-      });
+              res.send(`<html><body style="font-family: monospace;">${output}</body></html>`);
+            }
+          );
+        }
+      );
     });
   });
 });
