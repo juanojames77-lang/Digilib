@@ -1,11 +1,11 @@
 services:
   - type: web
     name: digilib
-    env: docker  # ⚠️ CHANGED FROM "node" TO "docker"
+    env: node
     region: singapore
     plan: free
-    dockerfilePath: ./dockerfile  # ⚠️ ADD THIS
-    autoDeploy: true
+    buildCommand: npm run build  # This runs the "build" script in package.json
+    startCommand: npm start
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -27,4 +27,3 @@ databases:
     databaseName: digilib
     user: digilib_user
     plan: free
-    ipAllowList: []
