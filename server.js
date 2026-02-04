@@ -843,61 +843,18 @@ app.get('/ml-check', requireLogin, isAdmin, async (req, res) => {
   }
 });
 
-// ================= TEST UPLOAD PAGE =================
-app.get('/upload-test', requireLogin, isAdmin, (req, res) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <style>
-        body { font-family: Arial; padding: 40px; }
-        form { margin: 20px 0; }
-        input { padding: 10px; margin: 10px; }
-      </style>
-    </head>
-    <body>
-      <h1>Test ML Upload</h1>
-      <form action="/upload" method="POST" enctype="multipart/form-data">
-        <input type="file" name="pdf" accept=".pdf" required><br>
-        <label><input type="checkbox" name="private"> Private</label><br>
-        <button type="submit">Upload Test PDF</button>
-      </form>
-      <p><a href="/ml-check">← Back to ML Check</a></p>
-    </body>
-    </html>
-  `);
-});
-// ========== DEBUG ROUTE ==========
-app.get('/ml-debug', async (req, res) => {
+app.get('/test-pdfplumber', (req, res) => {
   const { exec } = require('child_process');
   const fs = require('fs');
   
-  let html = '<h1>ML System Debug</h1><style>pre{background:#f0f0f0;padding:10px}</style>';
+  // Create test PDF content
+  fs.writeFileSync('/tmp/test.pdf', 'computer science machine learning');
   
-  // Test 1: Python and packages
-  exec('python3 --version && pip3 list', (err, stdout) => {
-    html += `<h2>Python & Packages:</h2><pre>${stdout || err?.message}</pre>`;
-    
-    // Test 2: Check ML files
-    exec('ls -la ml/ && echo "---" && python3 -c "import os; print(\"Vectorizer exists:\", os.path.exists(\"ml/vectorizer.joblib\")); print(\"KMeans exists:\", os.path.exists(\"ml/kmeans.joblib\"))"', 
-      (err, stdout) => {
-        html += `<h2>ML Files:</h2><pre>${stdout || err?.message}</pre>`;
-        
-        // Test 3: Run ML script
-        fs.writeFileSync('/tmp/test.pdf', 'computer science programming algorithms data structures machine learning');
-        exec('timeout 10 python3 ml/predict_cluster.py /tmp/test.pdf', 
-          (err, stdout, stderr) => {
-            html += `<h2>ML Test Result:</h2>`;
-            html += `<h3>Output:</h3><pre>${stdout || 'None'}</pre>`;
-            html += `<h3>Errors:</h3><pre>${stderr || 'None'}</pre>`;
-            html += `<h3>Exit Code:</h3><pre>${err ? err.code : '0 (Success)'}</pre>`;
-            
-            res.send(html);
-          }
-        );
-      }
-    );
-  });
+  exec('python3 -c "import pdfplumber; print(\"pdfplumber version:\", pdfplumber.__version__); with pdfplumber.open(\'/tmp/test.pdf\') as pdf: print(\"Test passed\")"', 
+    (err, stdout, stderr) => {
+      res.send(`<h1>PDFPlumber Test</h1><pre>${stdout || stderr || err?.message}</pre>`);
+    }
+  );
 });
 /* ================= START SERVER ================= */
 app.listen(PORT, () => {
