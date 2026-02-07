@@ -227,88 +227,186 @@ app.get('/admin', requireLogin, isAdmin, async (req,res)=>{
 });
 
 /* ================= UPLOAD ================= */
-/* ================= UPLOAD ================= */
-app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req,res)=>{
+// ================= HUGGING FACE ML CONFIG =================
+const HF_ML_API_URL = 'https://JamesGab.hf.space/run/predict'; // UPDATE THIS WITH YOUR URL
+const CLUSTER_NAMES = ['BSCS', 'BSED-MATH', 'BSES', 'BSHM', 'BTLED-HE', 'BEED'];
+
+// ================= UPLOAD WITH ML API =================
+app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req, res) => {
   const isPrivate = req.body.private === 'on';
   
   try {
-    if(!req.file?.path) return res.json({ success:false, message:'No file selected' });
+    // 1. Validate
+    if (!req.file?.path) {
+      return res.json({ success: false, message: 'No file selected' });
+    }
 
     const filename = path.parse(req.file.originalname).name;
+    console.log(`📤 Uploading: ${filename}`);
+
+    // 2. Get PDF from Cloudinary
+    console.log('📥 Fetching from Cloudinary...');
+    const cloudinaryResponse = await fetch(req.file.path);
+    const pdfBuffer = await cloudinaryResponse.arrayBuffer();
+    console.log(`📄 PDF size: ${pdfBuffer.byteLength} bytes`);
+
+    // 3. Convert to base64 for ML API
+    const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
     
-    // Create temp file in /tmp (Docker writable directory)
-    const tempPath = '/tmp/temp.pdf';
-    const response = await fetch(req.file.path);
-    const buffer = Buffer.from(await response.arrayBuffer());
-    fs.writeFileSync(tempPath, buffer);
+    // 4. Call Hugging Face ML API
+    console.log('🤖 Calling ML API:', HF_ML_API_URL);
     
-    console.log('🔍 Starting ML prediction for:', filename);
-    
-    // Use python3 (not python)
-    execFile('python3', ['ml/predict_cluster.py', tempPath], 
-      { timeout: 15000 }, // 15 second timeout
-      async (err, stdout, stderr) => {
-        
-        // Clean up temp file
-        try { fs.unlinkSync(tempPath); } catch(e) {}
-        
-        let clusterIndex = 0;
-        let confidence = 0.5;
-        
-        console.log('📊 Python output:', stdout || 'No output');
-        if (stderr) console.log('📝 Python errors:', stderr);
-        if (err) console.log('💥 Python process error:', err.message);
-        
-        if (stdout) {
-          try {
-            stdout = stdout.trim();
-            const parts = stdout.split(',');
-            if (parts.length >= 2) {
-              clusterIndex = parseInt(parts[0]) || 0;
-              confidence = parseFloat(parts[1]) || 0.5;
-              
-              // Validate ranges
-              clusterIndex = Math.max(0, Math.min(5, clusterIndex));
-              confidence = Math.max(0.1, Math.min(1.0, confidence));
-              
-              console.log(`✅ ML Prediction: Cluster ${clusterIndex}, Confidence ${confidence}`);
-            }
-          } catch (parseErr) {
-            console.log('❌ Failed to parse output:', parseErr.message);
-          }
-        }
-        
-        // Save to database
-        try {
-          await pool.query(
-            'INSERT INTO pdfs(title, cluster, url, is_private, uploader, confidence) VALUES($1,$2,$3,$4,$5,$6)',
-            [filename, clusterIndex, req.file.path, isPrivate, req.session.user, confidence]
-          );
-          
-          await pool.query(
-            'INSERT INTO upload_history(title, course, uploaded_by) VALUES($1,$2,$3)',
-            [filename, clusterIndex, req.session.user]
-          );
-          
-          console.log(`✅ Upload successful: ${filename} -> Cluster ${clusterIndex}`);
-          
-          res.json({ 
-            success: true, 
-            title: filename, 
-            cluster: clusterIndex, 
-            confidence: confidence.toFixed(2)
-          });
-          
-        } catch(dbErr) {
-          console.error('❌ Database error:', dbErr);
-          res.json({ success:false, message:'Database error' });
-        }
+    let mlResult;
+    try {
+      const startTime = Date.now();
+      
+      const hfResponse = await fetch(HF_ML_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          data: [{
+            name: `${filename}.pdf`,
+            data: pdfBase64
+          }]
+        }),
+        timeout: 60000 // 60 seconds timeout
+      });
+      
+      const responseTime = Date.now() - startTime;
+      console.log(`⏱️ ML API response time: ${responseTime}ms`);
+      console.log(`📊 ML API status: ${hfResponse.status}`);
+      
+      if (!hfResponse.ok) {
+        throw new Error(`ML API error: ${hfResponse.status} ${hfResponse.statusText}`);
       }
-    );
+      
+      const responseData = await hfResponse.json();
+      console.log('📦 ML API response:', JSON.stringify(responseData, null, 2));
+      
+      // Parse response
+      if (responseData.data && responseData.data[0]) {
+        const result = responseData.data[0];
+        
+        if (typeof result === 'string') {
+          // String response - parse it
+          const clusterMatch = result.match(/Cluster[:\s]*(\d+)/i);
+          const confidenceMatch = result.match(/Confidence[:\s]*([\d.]+)%/i);
+          
+          mlResult = {
+            success: true,
+            cluster: clusterMatch ? parseInt(clusterMatch[1]) : 0,
+            confidence: confidenceMatch ? parseFloat(confidenceMatch[1]) / 100 : 0.5,
+            raw: result
+          };
+        } else if (typeof result === 'object') {
+          // JSON response
+          mlResult = {
+            success: result.success || true,
+            cluster: result.cluster || result.cluster_number || 0,
+            confidence: result.confidence || 0.5,
+            raw: result
+          };
+        }
+      } else if (responseData.cluster !== undefined) {
+        // Direct JSON response
+        mlResult = {
+          success: responseData.success || true,
+          cluster: responseData.cluster || 0,
+          confidence: responseData.confidence || 0.5,
+          raw: responseData
+        };
+      } else {
+        throw new Error('Unexpected API response format');
+      }
+      
+    } catch (apiError) {
+      console.error('❌ ML API Error:', apiError.message);
+      mlResult = {
+        success: false,
+        error: apiError.message,
+        cluster: 0,
+        confidence: 0.5
+      };
+    }
+
+    // 5. Extract results
+    let clusterIndex = mlResult.cluster || 0;
+    let confidence = mlResult.confidence || 0.5;
     
-  } catch(e) {
-    console.error('❌ Upload error:', e);
-    res.json({ success:false, message:'Upload failed' });
+    // Validate
+    clusterIndex = Math.max(0, Math.min(5, clusterIndex));
+    confidence = Math.max(0.1, Math.min(1.0, confidence));
+    
+    const clusterName = CLUSTER_NAMES[clusterIndex] || 'Unknown';
+    
+    console.log(`✅ Final prediction: ${clusterName} (Cluster ${clusterIndex}), Confidence ${confidence.toFixed(2)}`);
+
+    // 6. Save to database
+    try {
+      await pool.query(
+        'INSERT INTO pdfs(title, cluster, url, is_private, uploader, confidence) VALUES($1,$2,$3,$4,$5,$6)',
+        [filename, clusterIndex, req.file.path, isPrivate, req.session.user, confidence]
+      );
+
+      await pool.query(
+        'INSERT INTO upload_history(title, course, uploaded_by) VALUES($1,$2,$3)',
+        [filename, clusterIndex, req.session.user]
+      );
+
+      console.log(`💾 Saved to database: ${filename}`);
+
+      // 7. Return success
+      res.json({
+        success: true,
+        title: filename,
+        cluster: clusterIndex,
+        cluster_name: clusterName,
+        confidence: confidence.toFixed(2),
+        api_used: mlResult.success !== false,
+        message: `Predicted as ${clusterName} with ${(confidence * 100).toFixed(1)}% confidence`
+      });
+
+    } catch (dbError) {
+      console.error('❌ Database error:', dbError);
+      res.json({ 
+        success: false, 
+        message: 'Database error',
+        error: dbError.message 
+      });
+    }
+
+  } catch (error) {
+    console.error('💥 Upload error:', error);
+    
+    // Fallback
+    try {
+      const filename = req.file ? path.parse(req.file.originalname).name : 'unknown';
+      
+      await pool.query(
+        'INSERT INTO pdfs(title, cluster, url, is_private, uploader, confidence) VALUES($1,$2,$3,$4,$5,$6)',
+        [filename, 0, req.file?.path || '', isPrivate, req.session.user, 0.5]
+      );
+      
+      res.json({
+        success: true,
+        title: filename,
+        cluster: 0,
+        cluster_name: 'BSCS',
+        confidence: 0.5,
+        api_used: false,
+        fallback: true,
+        message: 'Uploaded with default values (ML API failed)'
+      });
+      
+    } catch (fallbackError) {
+      res.json({ 
+        success: false, 
+        message: 'Upload failed completely' 
+      });
+    }
   }
 });
 /* ================= DELETE ================= */
@@ -736,178 +834,191 @@ app.get('/inline-pdf/:id', requireLogin, isAdmin, async (req, res) => {
   }
 });
 
-// ================= ML DIAGNOSTIC ROUTE =================
-app.get('/ml-check', requireLogin, isAdmin, async (req, res) => {
-  try {
-    let checks = [];
-    
-    // Check 1: ML directory
-    const mlPath = path.join(__dirname, 'ml');
-    checks.push(`📁 ML Directory: ${mlPath}`);
-    checks.push(`📂 Exists: ${fs.existsSync(mlPath) ? '✅ Yes' : '❌ No'}`);
-    
-    if (fs.existsSync(mlPath)) {
-      const files = fs.readdirSync(mlPath);
-      checks.push(`📄 Files: ${files.join(', ')}`);
-      
-      // Check each file
-      ['vectorizer.joblib', 'kmeans.joblib', 'predict_cluster.py'].forEach(file => {
-        const filePath = path.join(mlPath, file);
-        if (fs.existsSync(filePath)) {
-          const size = (fs.statSync(filePath).size / 1024).toFixed(1);
-          checks.push(`🔍 ${file}: ✅ Found (${size} KB)`);
-        } else {
-          checks.push(`🔍 ${file}: ❌ Missing`);
-        }
-      });
-    }
-    
-    // Check 2: Python
-    await new Promise((resolve) => {
-      execFile('python3', ['--version'], (err, stdout) => {
-        checks.push(`🐍 Python3: ${stdout ? `✅ ${stdout.trim()}` : `❌ ${err?.message || 'Not found'}`}`);
-        resolve();
-      });
-    });
-    
-    // Check 3: Python imports
-    await new Promise((resolve) => {
-      execFile('python3', ['-c', 'import PyPDF2, sklearn, joblib; print("✅ All imports work")'], 
-        (err, stdout) => {
-          checks.push(`📦 Python Imports: ${stdout ? stdout.trim() : `❌ ${err?.message}`}`);
-          resolve();
-        }
-      );
-    });
-    
-    // Check 4: Test ML script
-    await new Promise((resolve) => {
-      const testFile = path.join(__dirname, 'test.pdf');
-      fs.writeFileSync(testFile, 'Computer science machine learning artificial intelligence research thesis');
-      
-      execFile('python3', ['ml/predict_cluster.py', testFile], (err, stdout, stderr) => {
-        fs.unlinkSync(testFile);
-        
-        checks.push(`🧪 ML Test: ${stdout ? `Output: ${stdout.trim()}` : `❌ No output`}`);
-        if (err) checks.push(`💥 Error: ${err.message}`);
-        if (stderr) checks.push(`📝 Logs: ${stderr}`);
-        
-        resolve();
-      });
-    });
-    
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>ML System Check</title>
-        <style>
-          body { font-family: Arial; padding: 40px; background: #f5f5f5; }
-          .container { background: white; padding: 30px; border-radius: 10px; }
-          h1 { color: #333; }
-          pre { background: #f8f9fa; padding: 20px; border-radius: 5px; overflow: auto; }
-          .success { color: green; }
-          .error { color: red; }
-          .btn { background: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <h1>🔍 ML System Diagnostic</h1>
-          <pre>${checks.join('\n')}</pre>
-          
-          <h3>🎯 What to look for:</h3>
-          <ul>
-            <li>✅ All 3 ML files should be "Found"</li>
-            <li>✅ Python3 should show a version number</li>
-            <li>✅ Python Imports should say "All imports work"</li>
-            <li>✅ ML Test should NOT output "0,0.5"</li>
-          </ul>
-          
-          <div style="margin-top: 30px;">
-            <a href="/admin" class="btn">← Back to Admin</a>
-            <a href="/upload-test" class="btn" style="background: #2196F3; margin-left: 10px;">
-              Test Upload
-            </a>
-          </div>
-        </div>
-      </body>
-      </html>
-    `);
-    
-  } catch (error) {
-    res.send(`<h1>Error</h1><pre>${error.message}</pre>`);
-  }
-});
-
-// ================= TEST UPLOAD PAGE =================
-app.get('/upload-test', requireLogin, isAdmin, (req, res) => {
+// ================= ML TEST PAGE =================
+app.get('/model-test', requireLogin, isAdmin, (req, res) => {
   res.send(`
     <!DOCTYPE html>
     <html>
     <head>
+      <title>ML System Test</title>
       <style>
-        body { font-family: Arial; padding: 40px; }
-        form { margin: 20px 0; }
-        input { padding: 10px; margin: 10px; }
+        body { font-family: Arial; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .card { background: white; padding: 20px; border-radius: 10px; margin: 20px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn:hover { background: #45a049; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        textarea { width: 100%; height: 100px; padding: 10px; }
       </style>
     </head>
     <body>
-      <h1>Test ML Upload</h1>
-      <form action="/upload" method="POST" enctype="multipart/form-data">
-        <input type="file" name="pdf" accept=".pdf" required><br>
-        <label><input type="checkbox" name="private"> Private</label><br>
-        <button type="submit">Upload Test PDF</button>
-      </form>
-      <p><a href="/ml-check">← Back to ML Check</a></p>
+      <div class="container">
+        <h1>🤖 ML System Test</h1>
+        
+        <div class="card">
+          <h3>Test 1: Direct API Call</h3>
+          <button onclick="testAPI()" class="btn">Test Hugging Face API</button>
+          <div id="apiResult" class="result"></div>
+        </div>
+        
+        <div class="card">
+          <h3>Test 2: Upload Test PDF</h3>
+          <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" name="pdf" accept=".pdf" required><br><br>
+            <button type="submit" class="btn">Upload & Test</button>
+          </form>
+          <div id="uploadResult" class="result"></div>
+        </div>
+        
+        <div class="card">
+          <h3>Test 3: Text Prediction</h3>
+          <textarea id="testText" placeholder="Enter text to test...">computer science machine learning</textarea><br>
+          <button onclick="testText()" class="btn">Test Text Prediction</button>
+          <div id="textResult" class="result"></div>
+        </div>
+        
+        <div style="margin-top: 30px;">
+          <a href="/admin" class="btn">← Back to Admin</a>
+        </div>
+      </div>
+      
+      <script>
+        async function testAPI() {
+          const result = document.getElementById('apiResult');
+          result.innerHTML = 'Testing...';
+          result.className = 'result';
+          
+          try {
+            const response = await fetch('/api/test-ml');
+            const data = await response.json();
+            
+            if (data.success) {
+              result.className = 'result success';
+              result.innerHTML = \`
+                <h4>✅ API Working!</h4>
+                <p><strong>Status:</strong> \${data.status}</p>
+                <p><strong>Response:</strong></p>
+                <pre>\${JSON.stringify(data.response, null, 2)}</pre>
+              \`;
+            } else {
+              result.className = 'result error';
+              result.innerHTML = \`
+                <h4>❌ API Failed</h4>
+                <p>\${data.error}</p>
+              \`;
+            }
+          } catch (error) {
+            result.className = 'result error';
+            result.innerHTML = \`Error: \${error.message}\`;
+          }
+        }
+        
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const result = document.getElementById('uploadResult');
+          result.innerHTML = 'Uploading...';
+          result.className = 'result';
+          
+          const formData = new FormData(e.target);
+          
+          try {
+            const response = await fetch('/upload', {
+              method: 'POST',
+              body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+              result.className = 'result success';
+              result.innerHTML = \`
+                <h4>✅ Upload Successful!</h4>
+                <p><strong>File:</strong> \${data.title}</p>
+                <p><strong>Prediction:</strong> \${data.cluster_name} (Cluster \${data.cluster})</p>
+                <p><strong>Confidence:</strong> \${(data.confidence * 100).toFixed(1)}%</p>
+                <p><strong>ML API Used:</strong> \${data.api_used ? 'Yes' : 'No (fallback)'}</p>
+                <p>\${data.message}</p>
+              \`;
+            } else {
+              result.className = 'result error';
+              result.innerHTML = \`
+                <h4>❌ Upload Failed</h4>
+                <p>\${data.message}</p>
+                \${data.error ? '<p>' + data.error + '</p>' : ''}
+              \`;
+            }
+          } catch (error) {
+            result.className = 'result error';
+            result.innerHTML = \`Error: \${error.message}\`;
+          }
+        });
+        
+        async function testText() {
+          const text = document.getElementById('testText').value;
+          const result = document.getElementById('textResult');
+          result.innerHTML = 'Testing...';
+          result.className = 'result';
+          
+          try {
+            const response = await fetch('https://jamesgab.hf.space/run/predict', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                data: [text]
+              })
+            });
+            
+            const data = await response.json();
+            result.className = 'result success';
+            result.innerHTML = \`
+              <h4>✅ Text Prediction Result</h4>
+              <pre>\${JSON.stringify(data, null, 2)}</pre>
+            \`;
+          } catch (error) {
+            result.className = 'result error';
+            result.innerHTML = \`Error: \${error.message}\`;
+          }
+        }
+        
+        // Test API on page load
+        testAPI();
+      </script>
     </body>
     </html>
   `);
 });
-// Add this route somewhere in your server.js (after other routes but before app.listen)
 
-// ========== ML TEST ROUTE ==========
-app.get('/api/test-model', requireLogin, async (req, res) => {
+// ================= API TEST ENDPOINT =================
+app.get('/api/test-ml', async (req, res) => {
   try {
-    const fs = require('fs');
-    const { exec } = require('child_process');
-    const path = require('path');
+    const response = await fetch(HF_ML_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        data: ["computer science machine learning artificial intelligence"]
+      })
+    });
     
-    // Create a simple test PDF
-    const testPdfPath = '/tmp/test-ml.pdf';
-    fs.writeFileSync(testPdfPath, 'This is a test PDF about computer science and machine learning research thesis.');
+    const data = await response.json();
     
-    // Get absolute path to ML script
-    const mlScriptPath = path.join(__dirname, 'ml', 'predict_cluster.py');
-    
-    if (!fs.existsSync(mlScriptPath)) {
-      return res.json({ error: 'ML script not found', path: mlScriptPath });
-    }
-    
-    // Run the ML prediction
-    exec(`python3 "${mlScriptPath}" "${testPdfPath}"`, 
-      { timeout: 10000 },
-      (error, stdout, stderr) => {
-        
-        // Clean up test file
-        try { fs.unlinkSync(testPdfPath); } catch(e) {}
-        
-        res.json({
-          success: !error,
-          output: stdout ? stdout.trim() : null,
-          error: error ? error.message : null,
-          stderr: stderr ? stderr.trim() : null,
-          files: {
-            vectorizer: fs.existsSync(path.join(__dirname, 'ml', 'vectorizer.joblib')),
-            kmeans: fs.existsSync(path.join(__dirname, 'ml', 'kmeans.joblib')),
-            script: fs.existsSync(mlScriptPath)
-          }
-        });
-      }
-    );
+    res.json({
+      success: response.ok,
+      status: response.status,
+      url: HF_ML_API_URL,
+      response: data
+    });
     
   } catch (error) {
-    res.json({ error: error.message });
+    res.json({
+      success: false,
+      error: error.message
+    });
   }
 });
 /* ================= START SERVER ================= */

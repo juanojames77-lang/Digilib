@@ -4,7 +4,7 @@ services:
     env: node
     region: singapore
     plan: free
-    buildCommand: chmod +x setup.sh && ./setup.sh
+    buildCommand: npm install
     startCommand: npm start
     envVars:
       - key: DATABASE_URL
@@ -21,9 +21,6 @@ services:
         generateValue: true
       - key: NODE_ENV
         value: production
-      # Add Python path
-      - key: PYTHONPATH
-        value: /usr/local/lib/python3.10/dist-packages:/usr/lib/python3.10/dist-packages
 
 databases:
   - name: digilib-db
