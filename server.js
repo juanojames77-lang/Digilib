@@ -229,7 +229,7 @@ app.get('/admin', requireLogin, isAdmin, async (req,res)=>{
 /* ================= UPLOAD ================= */
 /* ================= RENDER ML API CONFIG ================= */
 // ⬇️⬇️⬇️ UPDATE THIS WITH YOUR ACTUAL ML API URL ⬇️⬇️⬇️
-const ML_API_URL = 'https://digilib-ml-api.onrender.com/predict';
+const ML_API_URL = 'https://digilib-api-ml.onrender.com/predict';
 
 /* ================= UPLOAD WITH ML API ================= */
 app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req, res) => {
