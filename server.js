@@ -737,7 +737,7 @@ app.get('/inline-pdf/:id', requireLogin, isAdmin, async (req, res) => {
 });
 
 // ================= ML DIAGNOSTIC ROUTE =================
-app.get('/model-check', requireLogin, isAdmin, async (req, res) => {
+app.get('/ml-check', requireLogin, isAdmin, async (req, res) => {
   try {
     let checks = [];
     
@@ -864,54 +864,50 @@ app.get('/upload-test', requireLogin, isAdmin, (req, res) => {
     </html>
   `);
 });
-// ================= TEST PYTHON INSTALL =================
-app.get('/test-python-install', async (req, res) => {
+// Add this route somewhere in your server.js (after other routes but before app.listen)
+
+// ========== ML TEST ROUTE ==========
+app.get('/api/test-ml', requireLogin, async (req, res) => {
   try {
-    let results = [];
+    const fs = require('fs');
+    const { exec } = require('child_process');
+    const path = require('path');
     
-    // Test 1: Check Python version
-    execFile('python3', ['--version'], (err, stdout) => {
-      results.push(`Python Version: ${stdout || err?.message}`);
-      
-      // Test 2: Check pip list
-      execFile('python3', ['-m', 'pip', 'list'], (err2, stdout2) => {
-        results.push(`\nInstalled Packages:\n${stdout2 || err2?.message}`);
+    // Create a simple test PDF
+    const testPdfPath = '/tmp/test-ml.pdf';
+    fs.writeFileSync(testPdfPath, 'This is a test PDF about computer science and machine learning research thesis.');
+    
+    // Get absolute path to ML script
+    const mlScriptPath = path.join(__dirname, 'ml', 'predict_cluster.py');
+    
+    if (!fs.existsSync(mlScriptPath)) {
+      return res.json({ error: 'ML script not found', path: mlScriptPath });
+    }
+    
+    // Run the ML prediction
+    exec(`python3 "${mlScriptPath}" "${testPdfPath}"`, 
+      { timeout: 10000 },
+      (error, stdout, stderr) => {
         
-        // Test 3: Try to import
-        execFile('python3', ['-c', `
-try:
-    import PyPDF2
-    import sklearn
-    import joblib
-    import numpy
-    print("✅ All imports successful!")
-except ImportError as e:
-    print(f"❌ Import failed: {e}")
-        `], (err3, stdout3) => {
-          results.push(`\nImport Test: ${stdout3 || err3?.message}`);
-          
-          // Test 4: Test ML script directly
-          const testFile = '/tmp/test_python.pdf';
-          fs.writeFileSync(testFile, 'Test PDF content');
-          
-          execFile('python3', ['ml/predict_cluster.py', testFile], (err4, stdout4, stderr4) => {
-            fs.unlinkSync(testFile);
-            results.push(`\nML Script Test:`);
-            results.push(`Output: ${stdout4 || 'No output'}`);
-            if (stderr4) results.push(`Errors: ${stderr4}`);
-            
-            res.send(`
-              <h1>Python Installation Test</h1>
-              <pre>${results.join('\n')}</pre>
-              <p>Key check: PyPDF2 should be in installed packages!</p>
-            `);
-          });
+        // Clean up test file
+        try { fs.unlinkSync(testPdfPath); } catch(e) {}
+        
+        res.json({
+          success: !error,
+          output: stdout ? stdout.trim() : null,
+          error: error ? error.message : null,
+          stderr: stderr ? stderr.trim() : null,
+          files: {
+            vectorizer: fs.existsSync(path.join(__dirname, 'ml', 'vectorizer.joblib')),
+            kmeans: fs.existsSync(path.join(__dirname, 'ml', 'kmeans.joblib')),
+            script: fs.existsSync(mlScriptPath)
+          }
         });
-      });
-    });
+      }
+    );
     
   } catch (error) {
-    res.send(`<h1>Error</h1><pre>${error.message}</pre>`);
+    res.json({ error: error.message });
   }
 });
 /* ================= START SERVER ================= */
