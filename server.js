@@ -228,7 +228,7 @@ app.get('/admin', requireLogin, isAdmin, async (req,res)=>{
 
 /* ================= UPLOAD ================= */
 // ================= HUGGING FACE ML CONFIG =================
-const HF_ML_API_URL = 'https://huggingface.co/spaces/JamesGab/digilib-ml/run/predict'; // UPDATE THIS WITH YOUR URL
+const HF_ML_API_URL = 'https://jamesgab-digilib-ml.hf.space/run/predict'; // UPDATE THIS WITH YOUR URL
 const CLUSTER_NAMES = ['BSCS', 'BSED-MATH', 'BSES', 'BSHM', 'BTLED-HE', 'BEED'];
 
 // ================= UPLOAD WITH ML API =================
