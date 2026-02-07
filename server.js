@@ -10,7 +10,7 @@ const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const { execFile } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
+
 
 const app = express();
 const PORT = process.env.PORT || 3000; // ✅ CHANGED FOR RENDER
@@ -867,7 +867,7 @@ app.get('/upload-test', requireLogin, isAdmin, (req, res) => {
 // Add this route somewhere in your server.js (after other routes but before app.listen)
 
 // ========== ML TEST ROUTE ==========
-app.get('/api/test-ml', requireLogin, async (req, res) => {
+app.get('/api/test-model', requireLogin, async (req, res) => {
   try {
     const fs = require('fs');
     const { exec } = require('child_process');
