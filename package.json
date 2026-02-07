@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "build": "echo 'Build started' && npm install && pip3 install -r requirements.txt || echo 'Python install may have failed'",
-    "test": "node -e \"console.log('Node works!')\""
+    "build": "echo 'Build script - use setup.sh instead'",
+    "postinstall": "echo 'Post-install hook'"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
