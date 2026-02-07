@@ -227,87 +227,139 @@ app.get('/admin', requireLogin, isAdmin, async (req,res)=>{
 });
 
 /* ================= UPLOAD ================= */
-app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req,res)=>{
+/* ================= RENDER ML API CONFIG ================= */
+// ⬇️⬇️⬇️ UPDATE THIS WITH YOUR ACTUAL ML API URL ⬇️⬇️⬇️
+const ML_API_URL = 'https://digilib-ml-api.onrender.com/predict';
+
+/* ================= UPLOAD WITH ML API ================= */
+app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req, res) => {
   const isPrivate = req.body.private === 'on';
   
   try {
-    if(!req.file?.path) return res.json({ success:false, message:'No file selected' });
+    // 1. Validate
+    if (!req.file?.path) {
+      return res.json({ success: false, message: 'No file selected' });
+    }
 
     const filename = path.parse(req.file.originalname).name;
+    console.log(`📤 Uploading: ${filename}`);
+
+    // 2. Get PDF from Cloudinary
+    const cloudinaryResponse = await fetch(req.file.path);
+    const pdfBuffer = await cloudinaryResponse.arrayBuffer();
     
-    // Create temp file in /tmp (Docker writable directory)
-    const tempPath = '/tmp/temp.pdf';
-    const response = await fetch(req.file.path);
-    const buffer = Buffer.from(await response.arrayBuffer());
-    fs.writeFileSync(tempPath, buffer);
+    // 3. Create FormData for ML API
+    const formData = new FormData();
+    formData.append('file', new Blob([pdfBuffer], { 
+      type: 'application/pdf' 
+    }), `${filename}.pdf`);
+
+    // 4. Call ML API
+    console.log(`🤖 Calling ML API: ${ML_API_URL}`);
     
-    console.log('🔍 Starting ML prediction for:', filename);
-    
-    // Use python3 (not python)
-    execFile('python3', ['ml/predict_cluster.py', tempPath], 
-      { timeout: 15000 }, // 15 second timeout
-      async (err, stdout, stderr) => {
-        
-        // Clean up temp file
-        try { fs.unlinkSync(tempPath); } catch(e) {}
-        
-        let clusterIndex = 0;
-        let confidence = 0.5;
-        
-        console.log('📊 Python output:', stdout || 'No output');
-        if (stderr) console.log('📝 Python errors:', stderr);
-        if (err) console.log('💥 Python process error:', err.message);
-        
-        if (stdout) {
-          try {
-            stdout = stdout.trim();
-            const parts = stdout.split(',');
-            if (parts.length >= 2) {
-              clusterIndex = parseInt(parts[0]) || 0;
-              confidence = parseFloat(parts[1]) || 0.5;
-              
-              // Validate ranges
-              clusterIndex = Math.max(0, Math.min(5, clusterIndex));
-              confidence = Math.max(0.1, Math.min(1.0, confidence));
-              
-              console.log(`✅ ML Prediction: Cluster ${clusterIndex}, Confidence ${confidence}`);
-            }
-          } catch (parseErr) {
-            console.log('❌ Failed to parse output:', parseErr.message);
-          }
-        }
-        
-        // Save to database
-        try {
-          await pool.query(
-            'INSERT INTO pdfs(title, cluster, url, is_private, uploader, confidence) VALUES($1,$2,$3,$4,$5,$6)',
-            [filename, clusterIndex, req.file.path, isPrivate, req.session.user, confidence]
-          );
-          
-          await pool.query(
-            'INSERT INTO upload_history(title, course, uploaded_by) VALUES($1,$2,$3)',
-            [filename, clusterIndex, req.session.user]
-          );
-          
-          console.log(`✅ Upload successful: ${filename} -> Cluster ${clusterIndex}`);
-          
-          res.json({ 
-            success: true, 
-            title: filename, 
-            cluster: clusterIndex, 
-            confidence: confidence.toFixed(2)
-          });
-          
-        } catch(dbErr) {
-          console.error('❌ Database error:', dbErr);
-          res.json({ success:false, message:'Database error' });
-        }
+    let mlResult;
+    try {
+      const response = await fetch(ML_API_URL, {
+        method: 'POST',
+        body: formData,
+        timeout: 60000 // 60 seconds
+      });
+      
+      console.log(`📊 ML API Status: ${response.status}`);
+      
+      if (response.ok) {
+        mlResult = await response.json();
+        console.log('✅ ML API Result:', JSON.stringify(mlResult, null, 2));
+      } else {
+        console.log(`❌ ML API Error: ${response.status}`);
+        mlResult = { success: false, cluster: 0, confidence: 0.5 };
       }
-    );
+    } catch (apiError) {
+      console.error('❌ ML API Connection Error:', apiError.message);
+      mlResult = { success: false, cluster: 0, confidence: 0.5 };
+    }
+
+    // 5. Get prediction results
+    let clusterIndex = 0;
+    let confidence = 0.5;
     
-  } catch(e) {
-    console.error('❌ Upload error:', e);
-    res.json({ success:false, message:'Upload failed' });
+    if (mlResult && mlResult.success) {
+      // Success from ML API
+      clusterIndex = mlResult.cluster || 0;
+      confidence = mlResult.confidence || 0.5;
+      
+      console.log(`✅ ML Prediction: Cluster ${clusterIndex}, Confidence ${confidence}`);
+    } else if (mlResult && mlResult.cluster !== undefined) {
+      // Some APIs return cluster directly
+      clusterIndex = mlResult.cluster;
+      confidence = mlResult.confidence || 0.5;
+    } else {
+      // Fallback
+      console.log(`⚠️ Using default values`);
+    }
+
+    // 6. Validate ranges (0-5 for your 6 clusters)
+    clusterIndex = Math.max(0, Math.min(5, clusterIndex));
+    confidence = Math.max(0.1, Math.min(1.0, confidence));
+    
+    const clusterNames = ['BSCS', 'BSED-MATH', 'BSES', 'BSHM', 'BTLED-HE', 'BEED'];
+    const clusterName = clusterNames[clusterIndex];
+
+    console.log(`🎯 Final: ${clusterName} (Cluster ${clusterIndex}), Confidence ${confidence.toFixed(2)}`);
+
+    // 7. Save to database
+    await pool.query(
+      'INSERT INTO pdfs(title, cluster, url, is_private, uploader, confidence) VALUES($1,$2,$3,$4,$5,$6)',
+      [filename, clusterIndex, req.file.path, isPrivate, req.session.user, confidence]
+    );
+
+    await pool.query(
+      'INSERT INTO upload_history(title, course, uploaded_by) VALUES($1,$2,$3)',
+      [filename, clusterIndex, req.session.user]
+    );
+
+    console.log(`💾 Saved to database: ${filename}`);
+
+    // 8. Return success
+    res.json({
+      success: true,
+      title: filename,
+      cluster: clusterIndex,
+      cluster_name: clusterName,
+      confidence: confidence.toFixed(2),
+      api_used: mlResult && mlResult.success === true,
+      message: `Predicted as ${clusterName} with ${(confidence * 100).toFixed(1)}% confidence`
+    });
+
+  } catch (error) {
+    console.error('💥 Upload error:', error);
+    
+    // Fallback: Save with default values
+    try {
+      const filename = req.file ? path.parse(req.file.originalname).name : 'unknown';
+      
+      await pool.query(
+        'INSERT INTO pdfs(title, cluster, url, is_private, uploader, confidence) VALUES($1,$2,$3,$4,$5,$6)',
+        [filename, 0, req.file?.path || '', isPrivate, req.session.user, 0.5]
+      );
+      
+      res.json({
+        success: true,
+        title: filename,
+        cluster: 0,
+        cluster_name: 'BSCS',
+        confidence: 0.5,
+        api_used: false,
+        fallback: true,
+        message: 'Uploaded with default values'
+      });
+      
+    } catch (fallbackError) {
+      res.json({ 
+        success: false, 
+        message: 'Upload failed completely' 
+      });
+    }
   }
 });
 /* ================= DELETE ================= */
