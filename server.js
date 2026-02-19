@@ -636,18 +636,16 @@ app.get('/admin/analytics-data', requireLogin, isAdmin, async (req, res) => {
   }
 });
 // USER ANALYTICS DATA (REAL DATA)
+// USER ANALYTICS DATA (FIXED VERSION)
 app.get('/user/analytics-data', requireLogin, async (req, res) => {
   try {
     const username = req.session.user;
+    console.log(`📊 Fetching analytics for user: ${username}`);
 
-    // Total PDFs downloaded (all statuses)
+    // Total PDFs downloaded (accepted downloads only)
     const totalDownloads = await pool.query(
-      'SELECT COUNT(*) FROM download_requests WHERE username = $1', [username]
-    );
-
-    // Total PDFs uploaded by user
-    const totalUploads = await pool.query(
-      'SELECT COUNT(*) FROM pdfs WHERE uploader = $1', [username]
+      'SELECT COUNT(*) FROM download_requests WHERE username = $1 AND status = $2', 
+      [username, 'accepted']
     );
 
     // Download request status counts
@@ -663,39 +661,78 @@ app.get('/user/analytics-data', requireLogin, async (req, res) => {
       SELECT p.cluster, COUNT(*) AS count
       FROM download_requests dr
       JOIN pdfs p ON dr.pdf_id = p.id
-      WHERE dr.username = $1 AND dr.status='accepted'
+      WHERE dr.username = $1 AND dr.status = 'accepted'
       GROUP BY p.cluster
       ORDER BY p.cluster
     `, [username]);
 
-    // Downloads over time (weekly)
+    // DOWNLOADS OVER TIME - FIXED VERSION
     const downloadsOverTime = await pool.query(`
-      SELECT DATE_TRUNC('week', dr.requested_at) AS week, COUNT(*) AS count
-      FROM download_requests dr
-      WHERE dr.username = $1 AND dr.status='accepted'
-      GROUP BY week
+      SELECT 
+        DATE_TRUNC('week', dr.downloaded_at) AS week,
+        COUNT(*) AS count
+      FROM download_history dr
+      WHERE dr.username = $1
+      GROUP BY DATE_TRUNC('week', dr.downloaded_at)
       ORDER BY week ASC
     `, [username]);
 
+    console.log('📈 Raw trend data:', downloadsOverTime.rows);
+
+    // Format the data properly
+    const formattedTrendData = downloadsOverTime.rows.map(row => {
+      let weekLabel = '';
+      
+      if (row.week) {
+        const date = new Date(row.week);
+        // Add 8 hours for PH timezone
+        date.setHours(date.getHours() + 8);
+        
+        // Format as "Week of MMM DD, YYYY"
+        weekLabel = date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      } else {
+        weekLabel = 'Unknown';
+      }
+      
+      return {
+        week: weekLabel,
+        count: parseInt(row.count) || 0
+      };
+    });
+
+    // If no data, provide empty array (chart will show nothing)
+    console.log('📊 Formatted trend data:', formattedTrendData);
+
     res.json({
       summary: {
-        totalDownloads: parseInt(totalDownloads.rows[0].count),
-        totalUploads: parseInt(totalUploads.rows[0].count)
+        totalDownloads: parseInt(totalDownloads.rows[0]?.count || 0)
       },
-      downloadStatus: downloadStatus.rows,
-      downloadsPerCourse: downloadsPerCourse.rows,
-      downloadsOverTime: downloadsOverTime.rows.map(r=>({
-        week: r.week.toISOString().slice(0,10),
-        count: parseInt(r.count)
-      }))
+      downloadStatus: downloadStatus.rows.map(row => ({
+        status: row.status,
+        count: parseInt(row.count)
+      })),
+      downloadsPerCourse: downloadsPerCourse.rows.map(row => ({
+        cluster: row.cluster,
+        count: parseInt(row.count)
+      })),
+      downloadsOverTime: formattedTrendData
     });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'User analytics error' });
+    console.error('❌ User analytics error:', err);
+    res.status(500).json({ 
+      error: 'User analytics error',
+      summary: { totalDownloads: 0 },
+      downloadStatus: [],
+      downloadsPerCourse: [],
+      downloadsOverTime: []
+    });
   }
 });
-
 
 // TOGGLE PRIVATE STATUS
 app.post('/toggle-private/:id', requireLogin, isAdmin, async (req,res)=>{

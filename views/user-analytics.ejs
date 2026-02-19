@@ -237,64 +237,203 @@ profileBubble.onclick=()=>profileDropdown.style.display=profileDropdown.style.di
 const darkToggle = document.getElementById('darkToggle');
 darkToggle.onchange=()=>document.body.classList.toggle('dark-mode',darkToggle.checked);
 
-function toggleHistory(){
-  document.getElementById('historyPanel').classList.toggle('show');
-}
-
 // Fetch user analytics
 const clusters = <%- JSON.stringify(clusters) %>;
+
+// Chart instances
+let courseChart = null;
+let statusChart = null;
+let trendChart = null;
+
 fetch('/user/analytics-data')
-.then(res=>res.json())
-.then(data=>{
-  document.getElementById('totalDownloads').textContent = data.summary.totalDownloads;
+.then(res => res.json())
+.then(data => {
+  console.log('📊 Analytics Data:', data);
+  
+  // Update total downloads
+  document.getElementById('totalDownloads').textContent = data.summary.totalDownloads || 0;
 
-  // Downloads by course
-  new Chart(document.getElementById('downloadsCourseChart'),{
-    type:'bar',
-    data:{
-      labels:data.downloadsPerCourse.map(d=>clusters[d.cluster]),
-      datasets:[{
-        label:'Downloads',
-        data:data.downloadsPerCourse.map(d=>d.count),
-        backgroundColor:'#3f51b5'
+  // ===== DOWNLOADS BY COURSE CHART =====
+  const courseCtx = document.getElementById('downloadsCourseChart').getContext('2d');
+  
+  // Destroy existing chart if it exists
+  if (courseChart) courseChart.destroy();
+  
+  // Prepare course data
+  const courseLabels = data.downloadsPerCourse.map(d => clusters[d.cluster] || 'Unknown');
+  const courseData = data.downloadsPerCourse.map(d => d.count || 0);
+  
+  courseChart = new Chart(courseCtx, {
+    type: 'bar',
+    data: {
+      labels: courseLabels,
+      datasets: [{
+        label: 'Downloads',
+        data: courseData,
+        backgroundColor: '#3f51b5',
+        borderRadius: 5
       }]
     },
-    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}}}
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (context) => `${context.raw} download${context.raw !== 1 ? 's' : ''}`
+          }
+        }
+      },
+      scales: {
+        y: { 
+          beginAtZero: true,
+          ticks: { stepSize: 1, precision: 0 }
+        }
+      }
+    }
   });
 
-  // Download requests status
-  new Chart(document.getElementById('downloadsStatusChart'),{
-    type:'pie',
-    data:{
-      labels:data.downloadStatus.map(d=>d.status),
-      datasets:[{
-        data:data.downloadStatus.map(d=>d.count),
-        backgroundColor:['#ffc107','#3f51b5','#f44336']
+  // ===== DOWNLOAD REQUESTS STATUS CHART =====
+  const statusCtx = document.getElementById('downloadsStatusChart').getContext('2d');
+  
+  if (statusChart) statusChart.destroy();
+  
+  // Prepare status data
+  const statusLabels = data.downloadStatus.map(d => d.status || 'unknown');
+  const statusData = data.downloadStatus.map(d => d.count || 0);
+  
+  statusChart = new Chart(statusCtx, {
+    type: 'pie',
+    data: {
+      labels: statusLabels,
+      datasets: [{
+        data: statusData,
+        backgroundColor: ['#ffc107', '#3f51b5', '#f44336'],
+        borderWidth: 0
       }]
     },
-    options:{responsive:true, maintainAspectRatio:false}
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              const label = context.label || '';
+              const value = context.raw || 0;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+              return `${label}: ${value} (${percentage}%)`;
+            }
+          }
+        }
+      }
+    }
   });
 
-  // Downloads trend over time
-  new Chart(document.getElementById('downloadsTrendChart'),{
-    type:'line',
-    data:{
-      labels:data.downloadsOverTime.map(d=>d.week),
-      datasets:[{
-        label:'Downloads',
-        data:data.downloadsOverTime.map(d=>d.count),
-        borderColor:'#3f51b5',
-        backgroundColor:'rgba(63,81,181,0.2)',
-        fill:true
+  // ===== DOWNLOADS OVER TIME LINE CHART =====
+  const trendCtx = document.getElementById('downloadsTrendChart').getContext('2d');
+  
+  if (trendChart) trendChart.destroy();
+  
+  // Prepare trend data
+  const trendLabels = data.downloadsOverTime.map(d => d.week || 'No Data');
+  const trendCounts = data.downloadsOverTime.map(d => d.count || 0);
+  
+  console.log('📈 Trend labels:', trendLabels);
+  console.log('📈 Trend counts:', trendCounts);
+  
+  // If no data, show empty chart with message
+  if (trendLabels.length === 0) {
+    trendLabels.push('No Downloads Yet');
+    trendCounts.push(0);
+  }
+  
+  trendChart = new Chart(trendCtx, {
+    type: 'line',
+    data: {
+      labels: trendLabels,
+      datasets: [{
+        label: 'Downloads',
+        data: trendCounts,
+        borderColor: '#3f51b5',
+        backgroundColor: 'rgba(63, 81, 181, 0.1)',
+        borderWidth: 3,
+        pointBackgroundColor: '#3f51b5',
+        pointBorderColor: '#fff',
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        tension: 0.3,
+        fill: true
       }]
     },
-    options:{responsive:true, maintainAspectRatio:false}
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              if (context.raw === 0 && trendLabels[0] === 'No Downloads Yet') {
+                return 'No download history available';
+              }
+              return `${context.raw} download${context.raw !== 1 ? 's' : ''}`;
+            }
+          }
+        },
+        legend: {
+          display: true,
+          position: 'top'
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1,
+            precision: 0,
+            callback: function(value) {
+              if (value === 0 && trendLabels[0] === 'No Downloads Yet') {
+                return '';
+              }
+              return value;
+            }
+          },
+          title: {
+            display: true,
+            text: 'Number of Downloads'
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Week'
+          }
+        }
+      }
+    }
   });
-
+})
+.catch(error => {
+  console.error('❌ Error fetching analytics:', error);
+  
+  // Show error state
+  document.getElementById('totalDownloads').textContent = 'Error';
+  
+  // Create error message in charts
+  ['downloadsCourseChart', 'downloadsStatusChart', 'downloadsTrendChart'].forEach(chartId => {
+    const canvas = document.getElementById(chartId);
+    const ctx = canvas.getContext('2d');
+    ctx.font = '14px Arial';
+    ctx.fillStyle = '#666';
+    ctx.textAlign = 'center';
+    ctx.fillText('Failed to load data', canvas.width/2, canvas.height/2);
+  });
 });
+
 window.addEventListener('pageshow', function (event) {
   if (event.persisted) {
-    // Page was loaded from back/forward cache
     window.location.reload();
   }
 });
