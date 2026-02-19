@@ -644,8 +644,8 @@ app.get('/user/analytics-data', requireLogin, async (req, res) => {
 
     // Total PDFs downloaded (accepted downloads only)
     const totalDownloads = await pool.query(
-      'SELECT COUNT(*) FROM download_requests WHERE username = $1 AND status = $2', 
-      [username, 'accepted']
+      'SELECT COUNT(*) FROM download_history WHERE username = $1', 
+      [username]
     );
 
     // Download request status counts
