@@ -496,13 +496,18 @@ app.get('/request-status/:id', requireLogin, async (req,res)=>{
 //DOWNLOAD HISTORY
 app.get('/downloads', requireLogin, async (req,res)=>{
   const result = await pool.query(`
-    SELECT p.title, dh.downloaded_at
+    SELECT 
+      p.title, 
+      dh.downloaded_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Manila' as downloaded_at
     FROM download_history dh
     JOIN pdfs p ON p.id = dh.pdf_id
     WHERE dh.username=$1
     ORDER BY dh.downloaded_at DESC
   `,[req.session.user]);
 
+  // Log to check the converted time
+  console.log('Download times:', result.rows);
+  
   res.render('downloads',{ files: result.rows, username:req.session.user });
 });
 
