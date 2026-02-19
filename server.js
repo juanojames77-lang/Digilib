@@ -659,9 +659,9 @@ app.get('/user/analytics-data', requireLogin, async (req, res) => {
     // Downloads per course
     const downloadsPerCourse = await pool.query(`
       SELECT p.cluster, COUNT(*) AS count
-      FROM download_requests dr
+      FROM download_history dr
       JOIN pdfs p ON dr.pdf_id = p.id
-      WHERE dr.username = $1 AND dr.status = 'accepted'
+      WHERE dr.username = $1
       GROUP BY p.cluster
       ORDER BY p.cluster
     `, [username]);
