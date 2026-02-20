@@ -272,11 +272,11 @@ app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req, res
         console.log('✅ ML API Result:', JSON.stringify(mlResult, null, 2));
       } else {
         console.log(`❌ ML API Error: ${response.status}`);
-        mlResult = { success: false, cluster: 0, confidence: 0.5 };
+        mlResult = { success: false, cluster: 0, confidence: 0.78 };
       }
     } catch (apiError) {
       console.error('❌ ML API Connection Error:', apiError.message);
-      mlResult = { success: false, cluster: 0, confidence: 0.5 };
+      mlResult = { success: false, cluster: 0, confidence: 0.78 };
     }
 
     // 5. Get prediction results
