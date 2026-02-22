@@ -2,84 +2,550 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Login</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIGILIB | Login</title>
+
+<!-- Font Awesome for Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;font-family:'Segoe UI',sans-serif;overflow-x:hidden;}
-body{background:#f0f0f0;display:flex;flex-direction:row;}
-
-/* Logo Section */
-.logo-container{
-  width:50%;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:#f0f0f0;
-  padding:40px;
-  flex-direction:column;
-}
-.logo-container img{
-  max-width:250px;
-  width:80%;
-  height:auto;
-}
-.logo-text{
-  margin-top:20px;
-  font-size:2.5em;
-  font-weight:bold;
-  font-family:'Arial Black',sans-serif;
-}
-.logo-text span:nth-child(1){ color:#4285F4; } /* D - Blue */
-.logo-text span:nth-child(2){ color:#EA4335; } /* I - Red */
-.logo-text span:nth-child(3){ color:#FBBC05; } /* G - Yellow */
-.logo-text span:nth-child(4){ color:#4285F4; } /* I - Blue */
-.logo-text span:nth-child(5){ color:#34A853; } /* L - Green */
-.logo-text span:nth-child(6){ color:#EA4335; } /* I - Red */
-.logo-text span:nth-child(7){ color:#FBBC05; } /* B - Yellow */
-.logo-text span:nth-child(8){ color:#4285F4; } /* R - Blue */
-.logo-text span:nth-child(9){ color:#34A853; } /* A - Green */
-.logo-text span:nth-child(10){ color:#EA4335; } /* R - Red */
-.logo-text span:nth-child(11){ color:#FBBC05; } /* Y - Yellow */
-
-/* Form Section */
-.form-container{
-  width:50%;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  background:linear-gradient(135deg,#3f51b5,#5c6bc0);
-}
-.form-box{
-  background:white;
-  padding:40px;
-  border-radius:12px;
-  width:80%;
-  max-width:400px;
-  color:#333;
-  box-shadow:0 8px 20px rgba(0,0,0,0.2);
-}
-form{display:flex;flex-direction:column;}
-input{padding:12px;margin:10px 0;border-radius:6px;border:1px solid #ccc;font-size:16px;}
-button{padding:12px;margin-top:10px;border:none;border-radius:6px;background:#3f51b5;color:white;font-weight:bold;cursor:pointer;transition:0.3s;}
-button:hover{background:#303f9f;}
-.switch{margin-top:15px;text-align:center;cursor:pointer;color:#3f51b5;font-weight:bold;}
-.error{color:#ff6b6b;font-weight:bold;margin-bottom:10px;}
-.form-label{
-  font-size:1.5em;
-  margin-bottom:15px;
-  font-weight:bold;
-  text-align:center;
-  color:#3f51b5;
+/* ========== GOOGLE SCHOLAR INSPIRED COLOR PALETTE ========== */
+:root {
+  --google-blue: #4285f4;
+  --google-red: #ea4335;
+  --google-yellow: #fbbc05;
+  --google-green: #34a853;
+  --dark-bg: #202124;
+  --light-bg: #f8f9fa;
+  --card-bg: #ffffff;
+  --text-primary: #3c4043;
+  --text-secondary: #5f6368;
+  --border-color: #dadce0;
+  --hover-bg: #f1f3f4;
+  --error-bg: #fce8e6;
+  --error-text: #a50e0e;
 }
 
-/* Responsive for mobile */
-@media(max-width:768px){
-  body{flex-direction:column;}
-  .logo-container, .form-container{width:100%;height:auto;padding:20px;}
-  .logo-container img{max-width:200px;}
-  .logo-text{font-size:2em;}
-  .form-box{width:90%;padding:30px;}
-  .form-label{font-size:1.3em;}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Google Sans', 'Segoe UI', Roboto, sans-serif;
+  overflow-x: hidden;
+}
+
+body {
+  background: var(--light-bg);
+  display: flex;
+  flex-direction: row;
+}
+
+/* ========== LOGO SECTION ========== */
+.logo-container {
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+  padding: 40px;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated background pattern */
+.logo-container::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(66,133,244,0.03) 0%, transparent 50%);
+  animation: rotate 30s linear infinite;
+  z-index: 0;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.logo-container img {
+  max-width: 280px;
+  width: 80%;
+  height: auto;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1));
+  transition: transform 0.3s ease;
+}
+
+.logo-container img:hover {
+  transform: scale(1.05);
+}
+
+/* Colorful DIGILIBRARY logo text */
+.logo-text {
+  margin-top: 20px;
+  font-size: 3em;
+  font-weight: 800;
+  font-family: 'Google Sans', 'Arial Black', sans-serif;
+  letter-spacing: 2px;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.logo-text span {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.logo-text span:hover {
+  transform: translateY(-5px);
+}
+
+/* Google colors for DIGILIBRARY */
+.logo-text span:nth-child(1) { color: var(--google-blue); } /* D */
+.logo-text span:nth-child(2) { color: var(--google-red); } /* I */
+.logo-text span:nth-child(3) { color: var(--google-yellow); } /* G */
+.logo-text span:nth-child(4) { color: var(--google-blue); } /* I */
+.logo-text span:nth-child(5) { color: var(--google-green); } /* L */
+.logo-text span:nth-child(6) { color: var(--google-red); } /* I */
+.logo-text span:nth-child(7) { color: var(--google-yellow); } /* B */
+.logo-text span:nth-child(8) { color: var(--google-blue); } /* R */
+.logo-text span:nth-child(9) { color: var(--google-green); } /* A */
+.logo-text span:nth-child(10) { color: var(--google-red); } /* R */
+.logo-text span:nth-child(11) { color: var(--google-yellow); } /* Y */
+
+/* Tagline */
+.tagline {
+  margin-top: 20px;
+  color: var(--text-secondary);
+  font-size: 1.1em;
+  position: relative;
+  z-index: 1;
+}
+
+.tagline i {
+  color: var(--google-blue);
+  margin: 0 5px;
+}
+
+/* ========== FORM SECTION ========== */
+.form-container {
+  width: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, var(--google-blue) 0%, #5c6bc0 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated circles in background */
+.form-container::before {
+  content: '';
+  position: absolute;
+  width: 150%;
+  height: 150%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 50%);
+  animation: pulse 15s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+}
+
+.form-box {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  padding: 48px;
+  border-radius: 24px;
+  width: 80%;
+  max-width: 440px;
+  color: var(--text-primary);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-box:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 30px 50px rgba(0,0,0,0.3);
+}
+
+.form-label {
+  font-size: 2em;
+  margin-bottom: 30px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--text-primary);
+  position: relative;
+}
+
+.form-label::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, var(--google-blue), var(--google-green));
+  border-radius: 2px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Input fields with icons */
+.input-group {
+  position: relative;
+  margin: 8px 0;
+}
+
+.input-group i {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  font-size: 18px;
+  transition: color 0.2s;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 16px 16px 16px 48px;
+  margin: 0;
+  border-radius: 12px;
+  border: 2px solid var(--border-color);
+  font-size: 16px;
+  transition: all 0.3s;
+  background: white;
+  color: var(--text-primary);
+}
+
+.input-group input:focus {
+  border-color: var(--google-blue);
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(66,133,244,0.1);
+}
+
+.input-group input:focus + i {
+  color: var(--google-blue);
+}
+
+.input-group input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+/* Options row */
+.options-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 16px 0 24px;
+}
+
+.remember-me {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.remember-me input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--google-blue);
+}
+
+.forgot-password {
+  color: var(--google-blue);
+  font-size: 14px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.forgot-password:hover {
+  color: #3b78e7;
+  text-decoration: underline;
+}
+
+/* Login button */
+.login-btn {
+  padding: 16px;
+  margin-top: 8px;
+  border: none;
+  border-radius: 30px;
+  background: var(--google-blue);
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.login-btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+.login-btn:hover {
+  background: #3b78e7;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(66,133,244,0.3);
+}
+
+.login-btn i {
+  font-size: 18px;
+  transition: transform 0.3s;
+}
+
+.login-btn:hover i {
+  transform: translateX(5px);
+}
+
+/* Error message */
+.error {
+  background: var(--error-bg);
+  color: var(--error-text);
+  padding: 14px 16px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-left: 4px solid var(--google-red);
+}
+
+.error i {
+  font-size: 18px;
+  color: var(--google-red);
+}
+
+/* Switch to register */
+.switch {
+  margin-top: 25px;
+  text-align: center;
+  cursor: pointer;
+  color: var(--google-blue);
+  font-weight: 500;
+  font-size: 15px;
+  padding: 12px;
+  border-radius: 30px;
+  transition: all 0.3s;
+  border: 2px solid transparent;
+}
+
+.switch:hover {
+  background: rgba(66,133,244,0.05);
+  border-color: var(--google-blue);
+}
+
+.switch i {
+  margin-left: 8px;
+  transition: transform 0.3s;
+}
+
+.switch:hover i {
+  transform: translateX(5px);
+}
+
+/* Divider */
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin: 20px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.divider span {
+  margin: 0 10px;
+}
+
+/* Demo credentials (optional) */
+.demo-credentials {
+  background: var(--hover-bg);
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.demo-credentials i {
+  color: var(--google-yellow);
+  margin-right: 5px;
+}
+
+/* ========== DARK MODE ========== */
+.dark-mode {
+  background: var(--dark-bg);
+}
+
+.dark-mode .logo-container {
+  background: linear-gradient(135deg, #2d2e30 0%, #3c4043 100%);
+}
+
+.dark-mode .logo-container img {
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+}
+
+.dark-mode .form-box {
+  background: rgba(45, 46, 48, 0.95);
+}
+
+.dark-mode .form-label {
+  color: #e8eaed;
+}
+
+.dark-mode .input-group input {
+  background: #3c4043;
+  border-color: #5f6368;
+  color: #e8eaed;
+}
+
+.dark-mode .input-group i {
+  color: #9aa0a6;
+}
+
+.dark-mode .input-group input:focus {
+  border-color: var(--google-blue);
+  background: #4a4d51;
+}
+
+.dark-mode .remember-me {
+  color: #9aa0a6;
+}
+
+.dark-mode .divider {
+  color: #9aa0a6;
+}
+
+.dark-mode .divider::before,
+.dark-mode .divider::after {
+  border-bottom-color: #5f6368;
+}
+
+/* ========== MOBILE RESPONSIVE ========== */
+@media (max-width: 768px) {
+  body {
+    flex-direction: column;
+  }
+  
+  .logo-container, 
+  .form-container {
+    width: 100%;
+    height: auto;
+    padding: 30px 20px;
+  }
+  
+  .logo-container {
+    padding: 40px 20px 20px;
+  }
+  
+  .logo-container img {
+    max-width: 180px;
+  }
+  
+  .logo-text {
+    font-size: 2.2em;
+  }
+  
+  .tagline {
+    font-size: 1em;
+  }
+  
+  .form-box {
+    width: 95%;
+    padding: 32px 24px;
+  }
+  
+  .form-label {
+    font-size: 1.8em;
+  }
+  
+  .options-row {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .logo-text {
+    font-size: 2.5em;
+  }
+  
+  .form-box {
+    padding: 40px 32px;
+  }
+}
+
+/* Loading state for login button */
+.login-btn.loading {
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.login-btn.loading i {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 </style>
 </head>
@@ -90,27 +556,136 @@ button:hover{background:#303f9f;}
   <div class="logo-text">
     <span>D</span><span>I</span><span>G</span><span>I</span><span>L</span><span>I</span><span>B</span><span>R</span><span>A</span><span>R</span><span>Y</span>
   </div>
+  <div class="tagline">
+    <i class="fas fa-graduation-cap"></i> Your Academic Research Portal <i class="fas fa-book"></i>
+  </div>
 </div>
 
 <div class="form-container">
   <div class="form-box">
-    <div class="form-label">Log In</div>
-    <% if (error) { %><div class="error"><%= error %></div><% } %>
-    <form action="/login" method="POST">
-      <input type="text" name="username" placeholder="Username" required>
-      <input type="password" name="password" placeholder="Password" required>
-      <button type="submit">Login</button>
+    <div class="form-label">Welcome Back!</div>
+    
+    <% if (error) { %>
+      <div class="error">
+        <i class="fas fa-exclamation-circle"></i>
+        <%= error %>
+      </div>
+    <% } %>
+    
+    <form action="/login" method="POST" id="loginForm">
+      <div class="input-group">
+        <i class="fas fa-user"></i>
+        <input type="text" name="username" placeholder="Username" required>
+      </div>
+      
+      <div class="input-group">
+        <i class="fas fa-lock"></i>
+        <input type="password" name="password" placeholder="Password" required>
+      </div>
+      
+      <div class="options-row">
+        <label class="remember-me">
+          <input type="checkbox" name="remember"> Remember me
+        </label>
+        <a href="#" class="forgot-password">Forgot password?</a>
+      </div>
+      
+      <button type="submit" class="login-btn" id="loginBtn">
+        <span>Sign In</span>
+        <i class="fas fa-arrow-right"></i>
+      </button>
     </form>
-    <div class="switch" id="goRegister">Don't have an account? Sign Up</div>
+    
+    <div class="divider">
+      <span>New to DIGILIB?</span>
+    </div>
+    
+    <div class="switch" id="goRegister">
+      Create an account <i class="fas fa-user-plus"></i>
+    </div>
+    
+    <!-- Optional demo credentials (you can remove this) -->
+    <div class="demo-credentials">
+      <i class="fas fa-info-circle"></i>
+      Demo: admin / password
+    </div>
   </div>
 </div>
 
 <script>
 const goRegister = document.getElementById('goRegister');
 goRegister.addEventListener('click', () => {
-  window.location='/register';
+  window.location = '/register';
 });
 
+// Loading state for login form
+const loginForm = document.getElementById('loginForm');
+const loginBtn = document.getElementById('loginBtn');
+
+if (loginForm) {
+  loginForm.addEventListener('submit', () => {
+    loginBtn.classList.add('loading');
+    loginBtn.innerHTML = '<i class="fas fa-spinner"></i> Signing in...';
+  });
+}
+
+// Remember me functionality (localStorage)
+const rememberCheckbox = document.querySelector('input[name="remember"]');
+const usernameInput = document.querySelector('input[name="username"]');
+
+// Load saved username if "Remember me" was checked
+const savedUsername = localStorage.getItem('rememberedUsername');
+if (savedUsername) {
+  usernameInput.value = savedUsername;
+  if (rememberCheckbox) rememberCheckbox.checked = true;
+}
+
+// Save username if remember me is checked
+if (rememberCheckbox) {
+  rememberCheckbox.addEventListener('change', () => {
+    if (rememberCheckbox.checked) {
+      localStorage.setItem('rememberedUsername', usernameInput.value);
+    } else {
+      localStorage.removeItem('rememberedUsername');
+    }
+  });
+}
+
+// Update saved username when typing
+usernameInput.addEventListener('input', () => {
+  if (rememberCheckbox && rememberCheckbox.checked) {
+    localStorage.setItem('rememberedUsername', usernameInput.value);
+  }
+});
+
+// Dark mode detection (optional - respects system preference)
+function detectDarkMode() {
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  if (prefersDark) {
+    document.body.classList.add('dark-mode');
+  }
+}
+
+// Uncomment if you want dark mode based on system preference
+// detectDarkMode();
+
+// Add smooth fade-in animation
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelector('.logo-container').style.opacity = '0';
+  document.querySelector('.form-container').style.opacity = '0';
+  
+  setTimeout(() => {
+    document.querySelector('.logo-container').style.transition = 'opacity 1s ease';
+    document.querySelector('.form-container').style.transition = 'opacity 1s ease';
+    document.querySelector('.logo-container').style.opacity = '1';
+    document.querySelector('.form-container').style.opacity = '1';
+  }, 100);
+});
+
+// Prevent form resubmission on page refresh
+if (window.history.replaceState) {
+  window.history.replaceState(null, null, window.location.href);
+}
 </script>
 
 </body>

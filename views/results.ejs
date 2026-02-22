@@ -2,27 +2,649 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Search Results</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIGILIB | Search Results</title>
+
+<!-- Font Awesome for Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <style>
-  body { font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding:40px; background:#ecf0f1; }
-  h1 { color:#3f51b5; margin-bottom:20px; }
-  ul { list-style:none; padding:0; }
-  li { background:white; margin-bottom:10px; padding:15px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); transition:0.2s; }
-  li:hover { transform:scale(1.02); }
-  a { text-decoration:none; color:#3f51b5; font-weight:500; }
-  a:hover { color:#2c387e; }
+/* ========== GOOGLE SCHOLAR INSPIRED COLOR PALETTE ========== */
+:root {
+  --google-blue: #4285f4;
+  --google-red: #ea4335;
+  --google-yellow: #fbbc05;
+  --google-green: #34a853;
+  --dark-bg: #202124;
+  --light-bg: #f8f9fa;
+  --card-bg: #ffffff;
+  --text-primary: #3c4043;
+  --text-secondary: #5f6368;
+  --border-color: #dadce0;
+  --hover-bg: #f1f3f4;
+}
+
+/* ========== BASE ========== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Google Sans', 'Segoe UI', Roboto, sans-serif;
+  background: var(--light-bg);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========== HEADER ========== */
+header {
+  background: white;
+  padding: 12px 32px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 1px 6px rgba(32,33,36,0.1);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.logo a {
+  display: flex;
+  gap: 4px;
+  color: inherit;
+}
+
+.logo span:nth-child(1) { color: var(--google-blue); font-weight: 700; }
+.logo span:nth-child(2) { color: var(--google-red); font-weight: 700; }
+.logo span:nth-child(3) { color: var(--google-yellow); font-weight: 700; }
+.logo span:nth-child(4) { color: var(--google-blue); font-weight: 700; }
+.logo span:nth-child(5) { color: var(--google-green); font-weight: 700; }
+.logo span:nth-child(6) { color: var(--google-red); font-weight: 700; }
+.logo span:nth-child(7) { color: var(--google-yellow); font-weight: 700; }
+
+/* Search bar in header */
+.header-search {
+  flex: 1;
+  max-width: 600px;
+}
+
+.search-form {
+  display: flex;
+  align-items: center;
+  background: var(--hover-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  padding: 4px 4px 4px 20px;
+  transition: all 0.2s;
+}
+
+.search-form:focus-within {
+  border-color: var(--google-blue);
+  box-shadow: 0 1px 6px rgba(66,133,244,0.3);
+  background: white;
+}
+
+.search-form i {
+  color: var(--text-secondary);
+  font-size: 18px;
+}
+
+.search-form input {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.search-form button {
+  background: var(--google-blue);
+  color: white;
+  border: none;
+  padding: 8px 24px;
+  border-radius: 24px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-form button:hover {
+  background: #3b78e7;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(66,133,244,0.4);
+}
+
+/* Header actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.back-link {
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 24px;
+  transition: all 0.2s;
+}
+
+.back-link:hover {
+  background: var(--hover-bg);
+  color: var(--google-blue);
+}
+
+/* ========== MAIN CONTENT ========== */
+main {
+  flex: 1;
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Results header */
+.results-header {
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.results-header h1 {
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.results-header h1 i {
+  color: var(--google-blue);
+  font-size: 28px;
+}
+
+.result-count {
+  background: white;
+  padding: 8px 20px;
+  border-radius: 24px;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.result-count i {
+  color: var(--google-blue);
+}
+
+/* Results grid/cards */
+.results-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.result-card {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.result-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  border-color: var(--google-blue);
+  transform: translateY(-2px);
+}
+
+.result-info {
+  flex: 1;
+  min-width: 300px;
+}
+
+.result-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.result-title i {
+  color: var(--google-red);
+  font-size: 18px;
+}
+
+.result-title a {
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.result-title a:hover {
+  color: var(--google-blue);
+  text-decoration: underline;
+}
+
+.result-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.course-badge {
+  background: #e8f0fe;
+  color: var(--google-blue);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.course-badge i {
+  font-size: 12px;
+}
+
+.private-badge {
+  background: #fce8e6;
+  color: var(--google-red);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.private-badge i {
+  font-size: 12px;
+}
+
+.result-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.view-btn {
+  background: white;
+  color: var(--google-blue);
+  border: 1px solid var(--border-color);
+  padding: 10px 24px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+}
+
+.view-btn:hover {
+  background: var(--google-blue);
+  color: white;
+  border-color: var(--google-blue);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(66,133,244,0.3);
+}
+
+.view-btn i {
+  font-size: 14px;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 80px 20px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.empty-state i {
+  font-size: 64px;
+  color: var(--google-yellow);
+  margin-bottom: 24px;
+}
+
+.empty-state h2 {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+.clear-search {
+  background: var(--google-blue);
+  color: white;
+  padding: 12px 32px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.clear-search:hover {
+  background: #3b78e7;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(66,133,244,0.3);
+}
+
+/* Loading state */
+.loading {
+  text-align: center;
+  padding: 60px;
+  color: var(--text-secondary);
+}
+
+.loading i {
+  font-size: 32px;
+  color: var(--google-blue);
+  margin-bottom: 16px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ========== DARK MODE ========== */
+.dark-mode {
+  background: var(--dark-bg);
+  color: #e8eaed;
+}
+
+.dark-mode header {
+  background: #2d2e30;
+  border-bottom-color: #5f6368;
+}
+
+.dark-mode .search-form {
+  background: #3c4043;
+  border-color: #5f6368;
+}
+
+.dark-mode .search-form input {
+  color: #e8eaed;
+}
+
+.dark-mode .back-link {
+  color: #bdc1c6;
+}
+
+.dark-mode .back-link:hover {
+  background: #3c4043;
+  color: #8ab4f8;
+}
+
+.dark-mode .result-count {
+  background: #2d2e30;
+  border-color: #5f6368;
+  color: #9aa0a6;
+}
+
+.dark-mode .result-card {
+  background: #2d2e30;
+  border-color: #5f6368;
+}
+
+.dark-mode .result-card:hover {
+  border-color: var(--google-blue);
+}
+
+.dark-mode .result-title {
+  color: #e8eaed;
+}
+
+.dark-mode .result-title a {
+  color: #e8eaed;
+}
+
+.dark-mode .result-title a:hover {
+  color: #8ab4f8;
+}
+
+.dark-mode .course-badge {
+  background: #394457;
+  color: #8ab4f8;
+}
+
+.dark-mode .view-btn {
+  background: #3c4043;
+  border-color: #5f6368;
+  color: #8ab4f8;
+}
+
+.dark-mode .view-btn:hover {
+  background: #8ab4f8;
+  color: #202124;
+}
+
+.dark-mode .empty-state {
+  background: #2d2e30;
+  border-color: #5f6368;
+}
+
+/* ========== MOBILE RESPONSIVE ========== */
+@media (max-width: 768px) {
+  header {
+    padding: 12px 16px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .logo {
+    font-size: 20px;
+  }
+
+  .header-search {
+    order: 3;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .header-actions {
+    margin-left: auto;
+  }
+
+  .back-link span {
+    display: none;
+  }
+
+  .back-link i {
+    margin: 0;
+  }
+
+  main {
+    padding: 16px;
+  }
+
+  .results-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .result-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .result-actions {
+    width: 100%;
+  }
+
+  .view-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  main {
+    padding: 24px;
+  }
+}
 </style>
 </head>
+
 <body>
-  <h1>Search Results for "<%= query %>"</h1>
+
+<header>
+  <!-- Colorful DIGILIB logo (linked to dashboard) -->
+  <div class="logo">
+    <a href="/">
+      <span>D</span><span>I</span><span>G</span><span>I</span><span>L</span><span>I</span><span>B</span>
+    </a>
+  </div>
+
+  <!-- Search bar in header -->
+  <div class="header-search">
+    <form action="/search" method="GET" class="search-form">
+      <i class="fas fa-search"></i>
+      <input type="text" name="q" placeholder="Search theses..." value="<%= query %>" autocomplete="off">
+      <button type="submit"><i class="fas fa-search"></i> Search</button>
+    </form>
+  </div>
+
+  <!-- Header actions -->
+  <div class="header-actions">
+    <a href="/" class="back-link">
+      <i class="fas fa-arrow-left"></i>
+      <span>Back to Dashboard</span>
+    </a>
+  </div>
+</header>
+
+<main>
+  <!-- Results Header -->
+  <div class="results-header">
+    <h1>
+      <i class="fas fa-search"></i>
+      Search Results for "<%= query %>"
+    </h1>
+    <div class="result-count">
+      <i class="fas fa-file-pdf"></i>
+      <span><%= results.length %> <%= results.length === 1 ? 'result' : 'results' %> found</span>
+    </div>
+  </div>
+
+  <!-- Results Grid -->
   <% if(results.length === 0){ %>
-    <p>No theses found.</p>
+    <div class="empty-state">
+      <i class="fas fa-search"></i>
+      <h2>No theses found</h2>
+      <p>We couldn't find any theses matching "<%= query %>"</p>
+      <a href="/" class="clear-search">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
   <% } else { %>
-    <ul>
+    <div class="results-grid">
       <% results.forEach(r => { %>
-        <li><a href="/view/<%= r.id %>"><%= r.title %></a> - <%= r.course %> <% if(r.is_private){ %> 🔒 <% } %></li>
+        <div class="result-card">
+          <div class="result-info">
+            <div class="result-title">
+              <i class="fas fa-file-pdf"></i>
+              <a href="/view/<%= r.id %>"><%= r.title %></a>
+            </div>
+            <div class="result-meta">
+              <span class="course-badge">
+                <i class="fas fa-graduation-cap"></i>
+                <%= r.course || 'Unknown Course' %>
+              </span>
+              <% if(r.is_private){ %>
+                <span class="private-badge">
+                  <i class="fas fa-lock"></i> Private
+                </span>
+              <% } %>
+            </div>
+          </div>
+          <div class="result-actions">
+            <a href="/view/<%= r.id %>" class="view-btn">
+              <i class="fas fa-eye"></i> View Thesis
+            </a>
+          </div>
+        </div>
       <% }) %>
-    </ul>
+    </div>
   <% } %>
+</main>
+
+<script>
+// Dark mode support (if you have dark mode toggle elsewhere)
+function initDarkMode() {
+  const darkMode = localStorage.getItem('darkMode') === 'true';
+  if (darkMode) {
+    document.body.classList.add('dark-mode');
+  }
+}
+
+// Run on page load
+initDarkMode();
+
+// Handle page cache
+window.addEventListener('pageshow', function (event) {
+  if (event.persisted) {
+    window.location.reload();
+  }
+});
+</script>
+
 </body>
 </html>

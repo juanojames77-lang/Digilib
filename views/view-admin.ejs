@@ -2,62 +2,517 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title><%= file.title %></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DIGILIB | <%= file.title %></title>
+  
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <style>
-    body{
-      margin:0;
-      font-family: Arial, sans-serif;
-      background:#f4f6fb;
+    /* ========== GOOGLE SCHOLAR INSPIRED COLOR PALETTE ========== */
+    :root {
+      --google-blue: #4285f4;
+      --google-red: #ea4335;
+      --google-yellow: #fbbc05;
+      --google-green: #34a853;
+      --dark-bg: #202124;
+      --light-bg: #f8f9fa;
+      --card-bg: #ffffff;
+      --text-primary: #3c4043;
+      --text-secondary: #5f6368;
+      --border-color: #dadce0;
+      --hover-bg: #f1f3f4;
     }
-    header{
-      background:#3f51b5;
-      color:white;
-      padding:15px 30px;
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    header h1{
-      margin:0;
-      font-size:22px;
+
+    body {
+      font-family: 'Google Sans', 'Segoe UI', Roboto, sans-serif;
+      background: var(--light-bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
-    .actions{
-      margin-top:10px;
+
+    /* ========== HEADER ========== */
+    header {
+      background: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      flex-shrink: 0;
     }
-    .actions form{
-      display:inline;
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 0;
     }
-    .actions button{
-      background:white;
-      color:#3f51b5;
-      border:none;
-      padding:8px 14px;
-      border-radius:6px;
-      cursor:pointer;
-      font-weight:bold;
-      margin-right:8px;
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 20px;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
     }
-    .content{
-      display:flex;
-      height:calc(100vh - 90px);
+
+    .back-btn:hover {
+      background: var(--hover-bg);
+      color: var(--google-blue);
     }
-    .pdf-container{
-      flex:3;
-      background:white;
+
+    .title-section {
+      min-width: 0;
     }
-    iframe{
-      width:100%;
-      height:100%;
-      border:none;
+
+    .title-section h1 {
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 500px;
     }
-    .side-panel{
-      flex:1;
-      padding:20px;
-      background:#fff;
-      border-left:1px solid #ddd;
-      overflow-y:auto;
+
+    .meta-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
     }
-    @media(max-width:900px){
-      .content{ flex-direction:column; }
-      .side-panel{ border-left:none; border-top:1px solid #ddd; }
+
+    .meta-info i {
+      margin-right: 4px;
+      color: var(--google-blue);
+    }
+
+    /* Header actions */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .action-btn {
+      background: white;
+      border: 1px solid var(--border-color);
+      padding: 8px 20px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-primary);
+      text-decoration: none;
+    }
+
+    .action-btn i {
+      font-size: 14px;
+    }
+
+    .action-btn.primary {
+      background: var(--google-blue);
+      color: white;
+      border-color: var(--google-blue);
+    }
+
+    .action-btn.primary:hover {
+      background: #3b78e7;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(66,133,244,0.3);
+    }
+
+    .action-btn.secondary {
+      background: white;
+      color: var(--text-primary);
+    }
+
+    .action-btn.secondary:hover {
+      background: var(--hover-bg);
+      border-color: var(--text-secondary);
+      transform: translateY(-1px);
+    }
+
+    .action-btn.warning {
+      background: white;
+      color: var(--google-red);
+      border-color: var(--border-color);
+    }
+
+    .action-btn.warning:hover {
+      background: var(--google-red);
+      color: white;
+      border-color: var(--google-red);
+    }
+
+    /* ========== MAIN CONTENT ========== */
+    .main-content {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* PDF Container */
+    .pdf-container {
+      flex: 3;
+      background: #e8eaed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: white;
+    }
+
+    /* Loading state for PDF */
+    .pdf-loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: var(--text-secondary);
+    }
+
+    .pdf-loading i {
+      font-size: 48px;
+      color: var(--google-blue);
+      margin-bottom: 16px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Side Panel */
+    .side-panel {
+      flex: 1;
+      background: white;
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 300px;
+    }
+
+    .panel-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      background: #f8f9fa;
+    }
+
+    .panel-header h3 {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-header h3 i {
+      color: var(--google-blue);
+    }
+
+    .similar-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .similar-item {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .similar-item:hover {
+      border-color: var(--google-blue);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transform: translateX(4px);
+    }
+
+    .similar-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: #e8f0fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--google-red);
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .similar-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .similar-info h4 {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .similar-info a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .similar-info a:hover {
+      color: var(--google-blue);
+    }
+
+    .similar-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .similar-meta i {
+      font-size: 10px;
+      color: var(--google-blue);
+    }
+
+    .no-similar {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-secondary);
+    }
+
+    .no-similar i {
+      font-size: 48px;
+      color: var(--border-color);
+      margin-bottom: 16px;
+    }
+
+    .no-similar p {
+      font-size: 14px;
+    }
+
+    /* PDF Controls (optional) */
+    .pdf-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      gap: 8px;
+      background: white;
+      padding: 8px;
+      border-radius: 28px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border: 1px solid var(--border-color);
+    }
+
+    .control-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .control-btn:hover {
+      background: var(--hover-bg);
+      color: var(--google-blue);
+    }
+
+    /* ========== DARK MODE ========== */
+    .dark-mode {
+      background: var(--dark-bg);
+    }
+
+    .dark-mode header {
+      background: #2d2e30;
+      border-bottom-color: #5f6368;
+    }
+
+    .dark-mode .title-section h1 {
+      color: #e8eaed;
+    }
+
+    .dark-mode .meta-info {
+      color: #9aa0a6;
+    }
+
+    .dark-mode .action-btn {
+      background: #3c4043;
+      border-color: #5f6368;
+      color: #e8eaed;
+    }
+
+    .dark-mode .action-btn:hover {
+      background: #4a4d51;
+    }
+
+    .dark-mode .action-btn.primary {
+      background: var(--google-blue);
+      color: white;
+    }
+
+    .dark-mode .action-btn.warning {
+      color: #f28b82;
+    }
+
+    .dark-mode .action-btn.warning:hover {
+      background: var(--google-red);
+      color: white;
+    }
+
+    .dark-mode .pdf-container {
+      background: #1e1e1e;
+    }
+
+    .dark-mode .side-panel {
+      background: #2d2e30;
+      border-left-color: #5f6368;
+    }
+
+    .dark-mode .panel-header {
+      background: #3c4043;
+      border-bottom-color: #5f6368;
+    }
+
+    .dark-mode .panel-header h3 {
+      color: #e8eaed;
+    }
+
+    .dark-mode .similar-item {
+      background: #3c4043;
+      border-color: #5f6368;
+    }
+
+    .dark-mode .similar-item:hover {
+      border-color: var(--google-blue);
+    }
+
+    .dark-mode .similar-info h4 {
+      color: #e8eaed;
+    }
+
+    .dark-mode .similar-info a:hover {
+      color: #8ab4f8;
+    }
+
+    .dark-mode .similar-meta {
+      color: #9aa0a6;
+    }
+
+    .dark-mode .pdf-controls {
+      background: #3c4043;
+      border-color: #5f6368;
+    }
+
+    .dark-mode .control-btn {
+      background: #3c4043;
+      color: #9aa0a6;
+    }
+
+    .dark-mode .control-btn:hover {
+      background: #4a4d51;
+      color: #8ab4f8;
+    }
+
+    /* ========== MOBILE RESPONSIVE ========== */
+    @media (max-width: 768px) {
+      .main-content {
+        flex-direction: column;
+      }
+
+      header {
+        padding: 12px 16px;
+      }
+
+      .title-section h1 {
+        max-width: 200px;
+      }
+
+      .header-actions {
+        gap: 8px;
+      }
+
+      .action-btn {
+        padding: 8px 12px;
+      }
+
+      .action-btn span {
+        display: none;
+      }
+
+      .action-btn i {
+        margin: 0;
+      }
+
+      .side-panel {
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+        min-width: auto;
+      }
+
+      .pdf-controls {
+        bottom: 10px;
+        right: 10px;
+      }
+    }
+
+    /* Tablet adjustments */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .title-section h1 {
+        max-width: 300px;
+      }
     }
   </style>
 </head>
@@ -65,49 +520,148 @@
 <body>
 
 <header>
-  <h1><%= file.title %></h1>
+  <!-- Header Left -->
+  <div class="header-left">
+    <a href="/admin" class="back-btn">
+      <i class="fas fa-arrow-left"></i>
+    </a>
+    <div class="title-section">
+      <h1><%= file.title %></h1>
+      <div class="meta-info">
+        <span><i class="fas fa-file-pdf"></i> PDF Document</span>
+        <span><i class="fas fa-calendar"></i> ID: #<%= file.id %></span>
+      </div>
+    </div>
+  </div>
 
-  <div class="actions">
-
-    <!-- TOGGLE PRIVATE -->
-    <form method="POST" action="/toggle-private/<%= file.id %>">
-      <button type="submit">
-        <%= file.is_private ? '🔓 Mark as Public' : '🔒 Mark as Private' %>
+  <!-- Header Actions -->
+  <div class="header-actions">
+    <!-- TOGGLE PRIVATE/PUBLIC -->
+    <form method="POST" action="/toggle-private/<%= file.id %>" style="display: inline;">
+      <button type="submit" class="action-btn <%= file.is_private ? 'warning' : 'primary' %>">
+        <i class="fas <%= file.is_private ? 'fa-lock' : 'fa-globe' %>"></i>
+        <span><%= file.is_private ? 'Mark as Public' : 'Mark as Private' %></span>
       </button>
     </form>
 
-    <a href="/admin" style="color:white;text-decoration:none;font-weight:bold;">
-      ⬅ Back to Dashboard
+    <!-- BACK TO DASHBOARD -->
+    <a href="/admin" class="action-btn secondary">
+      <i class="fas fa-th-large"></i>
+      <span>Dashboard</span>
     </a>
-
   </div>
 </header>
 
-<div class="content">
-
-  <!-- INLINE PDF (NO DOWNLOAD) -->
+<div class="main-content">
+  <!-- PDF CONTAINER -->
   <div class="pdf-container">
-    <iframe src="/inline-pdf/<%= file.id %>"></iframe>
+    <!-- PDF Viewer -->
+    <iframe src="/inline-pdf/<%= file.id %>" onload="hideLoader()" onerror="showError()"></iframe>
+    
+    <!-- Loading State -->
+    <div class="pdf-loading" id="pdfLoader">
+      <i class="fas fa-spinner"></i>
+      <p>Loading PDF...</p>
+    </div>
+
+    <!-- PDF Controls (optional) -->
+    <div class="pdf-controls">
+      <button class="control-btn" onclick="window.location.reload()" title="Refresh PDF">
+        <i class="fas fa-sync-alt"></i>
+      </button>
+      <button class="control-btn" onclick="window.open('/inline-pdf/<%= file.id %>', '_blank')" title="Open in new tab">
+        <i class="fas fa-external-link-alt"></i>
+      </button>
+    </div>
   </div>
 
-  <!-- SIMILAR -->
+  <!-- SIDE PANEL - SIMILAR THESES -->
   <div class="side-panel">
-    <h3>Similar Theses</h3>
+    <div class="panel-header">
+      <h3>
+        <i class="fas fa-file-signature"></i>
+        Similar Theses
+      </h3>
+    </div>
 
-    <% if(similar.length === 0){ %>
-      <p>No similar documents found.</p>
-    <% } else { %>
-      <ul>
+    <div class="similar-list">
+      <% if(similar.length === 0){ %>
+        <div class="no-similar">
+          <i class="fas fa-folder-open"></i>
+          <p>No similar documents found</p>
+        </div>
+      <% } else { %>
         <% similar.forEach(s => { %>
-          <li>
-            <a href="/view-admin/<%= s.id %>"><%= s.title %></a>
-          </li>
+          <a href="/view-admin/<%= s.id %>" style="text-decoration: none;">
+            <div class="similar-item">
+              <div class="similar-icon">
+                <i class="fas fa-file-pdf"></i>
+              </div>
+              <div class="similar-info">
+                <h4><%= s.title %></h4>
+                <div class="similar-meta">
+                  <i class="fas fa-hashtag"></i> ID: <%= s.id %>
+                  <i class="fas fa-arrow-right"></i> View
+                </div>
+              </div>
+            </div>
+          </a>
         <% }) %>
-      </ul>
-    <% } %>
+      <% } %>
+    </div>
   </div>
-
 </div>
+
+<script>
+  // Hide loader when PDF loads
+  function hideLoader() {
+    const loader = document.getElementById('pdfLoader');
+    if (loader) {
+      loader.style.display = 'none';
+    }
+  }
+
+  // Show error if PDF fails to load
+  function showError() {
+    const loader = document.getElementById('pdfLoader');
+    if (loader) {
+      loader.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #ea4335;"></i><p>Failed to load PDF</p>';
+      loader.style.display = 'block';
+    }
+  }
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    // ESC key to go back
+    if (e.key === 'Escape') {
+      window.location.href = '/admin';
+    }
+    
+    // P key to toggle private/public
+    if (e.key === 'p' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      document.querySelector('form[action*="toggle-private"] button')?.click();
+    }
+  });
+
+  // Dark mode support
+  function initDarkMode() {
+    const darkMode = localStorage.getItem('darkMode') === 'true';
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+    }
+  }
+
+  initDarkMode();
+
+  // Set timeout to hide loader if PDF takes too long
+  setTimeout(() => {
+    const loader = document.getElementById('pdfLoader');
+    if (loader && loader.style.display !== 'none') {
+      loader.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #fbbc05;"></i><p>PDF is taking longer than expected...</p>';
+    }
+  }, 5000);
+</script>
 
 </body>
 </html>

@@ -2,194 +2,821 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title><%= file.title %></title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DIGILIB | <%= file.title %></title>
+  
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <style>
-    body{
-      margin:0;
-      font-family: Arial, sans-serif;
-      background:#f4f6fb;
+    /* ========== GOOGLE SCHOLAR INSPIRED COLOR PALETTE ========== */
+    :root {
+      --google-blue: #4285f4;
+      --google-red: #ea4335;
+      --google-yellow: #fbbc05;
+      --google-green: #34a853;
+      --dark-bg: #202124;
+      --light-bg: #f8f9fa;
+      --card-bg: #ffffff;
+      --text-primary: #3c4043;
+      --text-secondary: #5f6368;
+      --border-color: #dadce0;
+      --hover-bg: #f1f3f4;
+      --status-pending: #fbbc05;
+      --status-accepted: #34a853;
+      --status-rejected: #ea4335;
     }
-    header{
-      background:#3f51b5;
-      color:white;
-      padding:15px 30px;
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
-    header h1{
-      margin:0;
-      font-size:22px;
+
+    body {
+      font-family: 'Google Sans', 'Segoe UI', Roboto, sans-serif;
+      background: var(--light-bg);
+      color: var(--text-primary);
+      line-height: 1.6;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
-    .actions{
-      margin-top:10px;
+
+    /* ========== HEADER ========== */
+    header {
+      background: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      flex-shrink: 0;
     }
-    .actions form, .actions a{
-      display:inline-block;
-      margin-right:8px;
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      min-width: 0;
     }
-    .actions button, .actions a{
-      background:white;
-      color:#3f51b5;
-      border:none;
-      padding:8px 14px;
-      border-radius:6px;
-      cursor:pointer;
-      font-weight:bold;
-      text-decoration:none;
+
+    .back-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 20px;
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      text-decoration: none;
+      color: var(--text-secondary);
     }
-    .actions button:hover, .actions a:hover{
-      background:#e0e0e0;
+
+    .back-btn:hover {
+      background: var(--hover-bg);
+      color: var(--google-blue);
     }
-    .content{
-      display:flex;
-      height:calc(100vh - 90px);
+
+    .title-section {
+      min-width: 0;
     }
-    .pdf-container{
-      flex:3;
-      background:white;
+
+    .title-section h1 {
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 500px;
     }
-    iframe{
-      width:100%;
-      height:100%;
-      border:none;
+
+    .meta-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
     }
-    .side-panel{
-      flex:1;
-      padding:20px;
-      background:#ffffff;
-      border-left:1px solid #ddd;
-      overflow-y:auto;
+
+    .meta-info i {
+      margin-right: 4px;
+      color: var(--google-blue);
     }
-    .side-panel h3{
-      margin-top:0;
-      color:#3f51b5;
+
+    /* Header actions */
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
-    .side-panel ul{
-      padding-left:20px;
+
+    .action-btn {
+      background: white;
+      border: 1px solid var(--border-color);
+      padding: 8px 20px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-primary);
+      text-decoration: none;
     }
-    .side-panel li{
-      margin-bottom:10px;
+
+    .action-btn i {
+      font-size: 14px;
     }
-    .side-panel a{
-      color:#333;
-      text-decoration:none;
-      font-weight:bold;
+
+    .action-btn:hover {
+      background: var(--hover-bg);
+      border-color: var(--text-secondary);
+      transform: translateY(-1px);
     }
-    .side-panel a:hover{
-      color:#3f51b5;
+
+    .action-btn.favorite {
+      background: var(--google-yellow);
+      color: #202124;
+      border-color: var(--google-yellow);
     }
-    .message {
-      display:inline-block;
-      margin-left:10px;
-      color: #fff;
-      background: #4caf50;
-      padding: 5px 10px;
-      border-radius: 5px;
-      font-weight: bold;
+
+    .action-btn.favorite:hover {
+      background: #f9ab00;
     }
-    @media(max-width:900px){
-      .content{
-        flex-direction:column;
+
+    .action-btn.favorite i {
+      color: #202124;
+    }
+
+    .action-btn.unfavorite {
+      background: white;
+      color: var(--google-red);
+      border-color: var(--border-color);
+    }
+
+    .action-btn.unfavorite:hover {
+      background: var(--google-red);
+      color: white;
+    }
+
+    .action-btn.download {
+      background: var(--google-blue);
+      color: white;
+      border-color: var(--google-blue);
+    }
+
+    .action-btn.download:hover {
+      background: #3b78e7;
+      box-shadow: 0 2px 6px rgba(66,133,244,0.3);
+    }
+
+    .action-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Status badges */
+    .status-badge {
+      padding: 6px 16px;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: white;
+      border: 1px solid var(--border-color);
+    }
+
+    .status-badge.pending {
+      background: #fef7e0;
+      color: #b06000;
+      border-color: #fbbc05;
+    }
+
+    .status-badge.accepted {
+      background: #e6f4ea;
+      color: #137333;
+      border-color: #34a853;
+    }
+
+    .status-badge.rejected {
+      background: #fce8e6;
+      color: #a50e0e;
+      border-color: #ea4335;
+    }
+
+    /* ========== MAIN CONTENT ========== */
+    .main-content {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    /* PDF Container */
+    .pdf-container {
+      flex: 3;
+      background: #e8eaed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: white;
+    }
+
+    /* Loading state for PDF */
+    .pdf-loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: var(--text-secondary);
+    }
+
+    .pdf-loading i {
+      font-size: 48px;
+      color: var(--google-blue);
+      margin-bottom: 16px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* PDF Controls */
+    .pdf-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      gap: 8px;
+      background: white;
+      padding: 8px;
+      border-radius: 28px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border: 1px solid var(--border-color);
+    }
+
+    .control-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: white;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .control-btn:hover {
+      background: var(--hover-bg);
+      color: var(--google-blue);
+    }
+
+    /* Side Panel */
+    .side-panel {
+      flex: 1;
+      background: white;
+      border-left: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-width: 300px;
+    }
+
+    .panel-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      background: #f8f9fa;
+    }
+
+    .panel-header h3 {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-header h3 i {
+      color: var(--google-blue);
+    }
+
+    .similar-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .similar-item {
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .similar-item:hover {
+      border-color: var(--google-blue);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transform: translateX(4px);
+    }
+
+    .similar-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: #e8f0fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--google-red);
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .similar-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .similar-info h4 {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .similar-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .similar-meta i {
+      font-size: 10px;
+    }
+
+    .no-similar {
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-secondary);
+    }
+
+    .no-similar i {
+      font-size: 48px;
+      color: var(--border-color);
+      margin-bottom: 16px;
+    }
+
+    .no-similar p {
+      font-size: 14px;
+    }
+
+    /* Download area */
+    .download-area {
+      display: flex;
+      align-items: center;
+    }
+
+    /* Success message */
+    .success-message {
+      background: #e6f4ea;
+      color: #137333;
+      padding: 8px 16px;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ========== DARK MODE ========== */
+    .dark-mode {
+      background: var(--dark-bg);
+    }
+
+    .dark-mode header {
+      background: #2d2e30;
+      border-bottom-color: #5f6368;
+    }
+
+    .dark-mode .title-section h1 {
+      color: #e8eaed;
+    }
+
+    .dark-mode .meta-info {
+      color: #9aa0a6;
+    }
+
+    .dark-mode .action-btn {
+      background: #3c4043;
+      border-color: #5f6368;
+      color: #e8eaed;
+    }
+
+    .dark-mode .action-btn:hover {
+      background: #4a4d51;
+    }
+
+    .dark-mode .action-btn.favorite {
+      background: #fbbc05;
+      color: #202124;
+    }
+
+    .dark-mode .action-btn.unfavorite {
+      color: #f28b82;
+    }
+
+    .dark-mode .action-btn.unfavorite:hover {
+      background: #ea4335;
+      color: white;
+    }
+
+    .dark-mode .pdf-container {
+      background: #1e1e1e;
+    }
+
+    .dark-mode .side-panel {
+      background: #2d2e30;
+      border-left-color: #5f6368;
+    }
+
+    .dark-mode .panel-header {
+      background: #3c4043;
+      border-bottom-color: #5f6368;
+    }
+
+    .dark-mode .panel-header h3 {
+      color: #e8eaed;
+    }
+
+    .dark-mode .similar-item {
+      background: #3c4043;
+      border-color: #5f6368;
+    }
+
+    .dark-mode .similar-item:hover {
+      border-color: var(--google-blue);
+    }
+
+    .dark-mode .similar-info h4 {
+      color: #e8eaed;
+    }
+
+    .dark-mode .similar-meta {
+      color: #9aa0a6;
+    }
+
+    .dark-mode .pdf-controls {
+      background: #3c4043;
+      border-color: #5f6368;
+    }
+
+    .dark-mode .control-btn {
+      background: #3c4043;
+      color: #9aa0a6;
+    }
+
+    .dark-mode .control-btn:hover {
+      background: #4a4d51;
+      color: #8ab4f8;
+    }
+
+    /* ========== MOBILE RESPONSIVE ========== */
+    @media (max-width: 768px) {
+      .main-content {
+        flex-direction: column;
       }
-      .side-panel{
-        border-left:none;
-        border-top:1px solid #ddd;
+
+      header {
+        padding: 12px 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .header-left {
+        width: 100%;
+      }
+
+      .title-section h1 {
+        max-width: 100%;
+      }
+
+      .header-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .side-panel {
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+        min-width: auto;
+      }
+
+      .pdf-controls {
+        bottom: 10px;
+        right: 10px;
+      }
+
+      .action-btn {
+        padding: 6px 12px;
+        font-size: 13px;
+      }
+    }
+
+    /* Tablet adjustments */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .title-section h1 {
+        max-width: 300px;
+      }
+
+      .header-actions {
+        gap: 8px;
+      }
+
+      .action-btn {
+        padding: 6px 16px;
       }
     }
   </style>
 </head>
 
 <body>
-<header>
-  <h1><%= file.title %></h1>
 
-  <div class="actions">
+<header>
+  <!-- Header Left -->
+  <div class="header-left">
+    <a href="/" class="back-btn">
+      <i class="fas fa-arrow-left"></i>
+    </a>
+    <div class="title-section">
+      <h1><%= file.title %></h1>
+      <div class="meta-info">
+        <span><i class="fas fa-file-pdf"></i> PDF Document</span>
+        <span><i class="fas fa-hashtag"></i> ID: #<%= file.id %></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header Actions -->
+  <div class="header-actions">
     <!-- FAVORITE BUTTON -->
-    <form method="POST" action="/<%= isFavorite ? 'unfavorite' : 'favorite' %>/<%= file.id %>">
-      <button type="submit">
-        <%= isFavorite ? '★ Remove Favorite' : '☆ Add to Favorites' %>
+    <form method="POST" action="/<%= isFavorite ? 'unfavorite' : 'favorite' %>/<%= file.id %>" style="display: inline;">
+      <button type="submit" class="action-btn <%= isFavorite ? 'unfavorite' : 'favorite' %>">
+        <i class="fas <%= isFavorite ? 'fa-star' : 'fa-star' %>"></i>
+        <%= isFavorite ? 'Remove Favorite' : 'Add to Favorites' %>
       </button>
     </form>
 
     <!-- DOWNLOAD / REQUEST BUTTON -->
-    <span id="download-area">
-    <% if (!downloadRequest) { %>
-      <form id="request-download-form">
-        <button type="submit">Request Full PDF</button>
-      </form>
-    <% } else if (downloadRequest.status === 'pending') { %>
-      <button disabled>Request Pending</button>
-    <% } else if (downloadRequest.status === 'accepted') { %>
-      <a href="/download/<%= file.id %>">⬇ Download Full PDF</a>
-    <% } else if (downloadRequest.status === 'rejected') { %>
-      <button disabled>Request Rejected</button>
-    <% } %>
-    </span>
-
-    <a href="/" style="color:rgb(57, 83, 190);">⬅ Back to Library</a>
+    <div class="download-area" id="download-area">
+      <% if (!downloadRequest) { %>
+        <form id="request-download-form" style="display: inline;">
+          <button type="submit" class="action-btn download">
+            <i class="fas fa-download"></i> Request PDF
+          </button>
+        </form>
+      <% } else if (downloadRequest.status === 'pending') { %>
+        <span class="status-badge pending">
+          <i class="fas fa-clock"></i> Request Pending
+        </span>
+      <% } else if (downloadRequest.status === 'accepted') { %>
+        <a href="/download/<%= file.id %>" class="action-btn download">
+          <i class="fas fa-download"></i> Download PDF
+        </a>
+      <% } else if (downloadRequest.status === 'rejected') { %>
+        <span class="status-badge rejected">
+          <i class="fas fa-times-circle"></i> Request Rejected
+        </span>
+      <% } %>
+    </div>
   </div>
 </header>
 
-<div class="content">
-
-  <!-- PDF VIEWER -->
+<div class="main-content">
+  <!-- PDF CONTAINER -->
   <div class="pdf-container">
-    <iframe
-      src="https://docs.google.com/gview?url=<%= encodeURIComponent(file.url) %>&embedded=true">
+    <!-- PDF Viewer -->
+    <iframe 
+      src="https://docs.google.com/gview?url=<%= encodeURIComponent(file.url) %>&embedded=true"
+      onload="hideLoader()"
+      onerror="showError()">
     </iframe>
+    
+    <!-- Loading State -->
+    <div class="pdf-loading" id="pdfLoader">
+      <i class="fas fa-spinner"></i>
+      <p>Loading PDF preview...</p>
+    </div>
+
+    <!-- PDF Controls -->
+    <div class="pdf-controls">
+      <button class="control-btn" onclick="window.location.reload()" title="Refresh">
+        <i class="fas fa-sync-alt"></i>
+      </button>
+      <button class="control-btn" onclick="window.open('https://docs.google.com/gview?url=<%= encodeURIComponent(file.url) %>&embedded=true', '_blank')" title="Open in new tab">
+        <i class="fas fa-external-link-alt"></i>
+      </button>
+    </div>
   </div>
 
-  <!-- SIDE PANEL -->
+  <!-- SIDE PANEL - SIMILAR THESES -->
   <div class="side-panel">
-    <h3>Similar Theses</h3>
-    <% if(similar.length === 0){ %>
-      <p>No similar documents found.</p>
-    <% } else { %>
-      <ul>
+    <div class="panel-header">
+      <h3>
+        <i class="fas fa-file-signature"></i>
+        Similar Theses
+      </h3>
+    </div>
+
+    <div class="similar-list">
+      <% if(similar.length === 0){ %>
+        <div class="no-similar">
+          <i class="fas fa-folder-open"></i>
+          <p>No similar documents found</p>
+        </div>
+      <% } else { %>
         <% similar.forEach(s => { %>
-          <li>
-            <a href="/view/<%= s.id %>"><%= s.title %></a>
-          </li>
+          <a href="/view/<%= s.id %>" class="similar-item">
+            <div class="similar-icon">
+              <i class="fas fa-file-pdf"></i>
+            </div>
+            <div class="similar-info">
+              <h4><%= s.title %></h4>
+              <div class="similar-meta">
+                <i class="fas fa-hashtag"></i> ID: <%= s.id %>
+                <i class="fas fa-arrow-right"></i> View
+              </div>
+            </div>
+          </a>
         <% }) %>
-      </ul>
-    <% } %>
+      <% } %>
+    </div>
   </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function(){
-  const form = document.getElementById('request-download-form');
-  const downloadArea = document.getElementById('download-area');
-
-  // Submit request
-  if(form){
-    form.addEventListener('submit', async function(e){
-      e.preventDefault();
-      const response = await fetch('/request-download/<%= file.id %>', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'}
-      });
-      if(response.ok){
-        downloadArea.innerHTML = '<button disabled>Request Sent ✅</button>';
-      } else {
-        alert('Request failed or already sent.');
-      }
-    });
+  // Hide loader when PDF loads
+  function hideLoader() {
+    const loader = document.getElementById('pdfLoader');
+    if (loader) {
+      loader.style.display = 'none';
+    }
   }
 
-  // Poll for status every 5 seconds
-  setInterval(async () => {
-    const resp = await fetch('/request-status/<%= file.id %>');
-    if(resp.ok){
-      const data = await resp.json();
-      if(data.status === 'accepted'){
-        downloadArea.innerHTML = `<a href="/download/<%= file.id %>">⬇ Download Full PDF</a>`;
-      } else if(data.status === 'rejected'){
-        downloadArea.innerHTML = `<button disabled>Request Rejected</button>`;
-      } else if(data.status === 'pending'){
-        downloadArea.innerHTML = `<button disabled>Request Pending</button>`;
+  // Show error if PDF fails to load
+  function showError() {
+    const loader = document.getElementById('pdfLoader');
+    if (loader) {
+      loader.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #ea4335;"></i><p>Failed to load PDF preview</p>';
+      loader.style.display = 'block';
+    }
+  }
+
+  // Request download functionality
+  document.addEventListener('DOMContentLoaded', function(){
+    const form = document.getElementById('request-download-form');
+    const downloadArea = document.getElementById('download-area');
+
+    // Submit request
+    if(form){
+      form.addEventListener('submit', async function(e){
+        e.preventDefault();
+        
+        // Show loading state
+        const originalContent = downloadArea.innerHTML;
+        downloadArea.innerHTML = '<span class="status-badge pending"><i class="fas fa-spinner fa-spin"></i> Sending request...</span>';
+        
+        try {
+          const response = await fetch('/request-download/<%= file.id %>', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+          });
+          
+          if(response.ok){
+            downloadArea.innerHTML = '<span class="success-message"><i class="fas fa-check-circle"></i> Request Sent!</span>';
+            // Update after 2 seconds
+            setTimeout(() => {
+              downloadArea.innerHTML = '<span class="status-badge pending"><i class="fas fa-clock"></i> Request Pending</span>';
+            }, 2000);
+          } else {
+            downloadArea.innerHTML = originalContent;
+            alert('Request failed or already sent.');
+          }
+        } catch (error) {
+          downloadArea.innerHTML = originalContent;
+          alert('Network error. Please try again.');
+        }
+      });
+    }
+
+    // Poll for status every 5 seconds
+    let pollCount = 0;
+    const pollInterval = setInterval(async () => {
+      // Stop polling after 2 minutes to prevent infinite polling
+      pollCount++;
+      if (pollCount > 24) { // 24 * 5 seconds = 2 minutes
+        clearInterval(pollInterval);
+        return;
       }
+
+      try {
+        const resp = await fetch('/request-status/<%= file.id %>');
+        if(resp.ok){
+          const data = await resp.json();
+          
+          // Only update if status changed
+          const currentStatus = downloadArea.querySelector('.status-badge')?.className || '';
+          
+          if(data.status === 'accepted' && !currentStatus.includes('accepted')){
+            downloadArea.innerHTML = `<a href="/download/<%= file.id %>" class="action-btn download"><i class="fas fa-download"></i> Download PDF</a>`;
+          } else if(data.status === 'rejected' && !currentStatus.includes('rejected')){
+            downloadArea.innerHTML = `<span class="status-badge rejected"><i class="fas fa-times-circle"></i> Request Rejected</span>`;
+          } else if(data.status === 'pending' && !currentStatus.includes('pending')){
+            downloadArea.innerHTML = `<span class="status-badge pending"><i class="fas fa-clock"></i> Request Pending</span>`;
+          }
+        }
+      } catch (error) {
+        console.log('Polling error:', error);
+      }
+    }, 5000);
+  });
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    // ESC key to go back
+    if (e.key === 'Escape') {
+      window.location.href = '/';
+    }
+    
+    // F key to toggle favorite (Ctrl+F or Cmd+F)
+    if (e.key === 'f' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      document.querySelector('form[action*="favorite"], form[action*="unfavorite"]')?.querySelector('button')?.click();
+    }
+  });
+
+  // Dark mode support
+  function initDarkMode() {
+    const darkMode = localStorage.getItem('darkMode') === 'true';
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+    }
+  }
+
+  initDarkMode();
+
+  // Set timeout to hide loader if PDF takes too long
+  setTimeout(() => {
+    const loader = document.getElementById('pdfLoader');
+    if (loader && loader.style.display !== 'none') {
+      loader.innerHTML = '<i class="fas fa-exclamation-triangle" style="color: #fbbc05;"></i><p>PDF preview is taking longer than expected...</p>';
     }
   }, 5000);
-});
 </script>
+
 </body>
 </html>

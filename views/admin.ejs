@@ -6,223 +6,873 @@
 <meta http-equiv="Cache-Control" content="no-store" />
 <title>DIGILIB | Admin Dashboard</title>
 
-<link rel="stylesheet" href="/style.css">
+<!-- Font Awesome for Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+/* ========== GOOGLE SCHOLAR INSPIRED COLOR PALETTE ========== */
+:root {
+  --google-blue: #4285f4;
+  --google-red: #ea4335;
+  --google-yellow: #fbbc05;
+  --google-green: #34a853;
+  --dark-bg: #202124;
+  --light-bg: #f8f9fa;
+  --card-bg: #ffffff;
+  --text-primary: #3c4043;
+  --text-secondary: #5f6368;
+  --border-color: #dadce0;
+  --hover-bg: #f1f3f4;
+}
+
 /* ========== BASE ========== */
-body{
-  font-family:'Segoe UI',sans-serif;
-  margin:0;
-  background:#f4f6fb;
-  transition:.3s;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
-a{text-decoration:none}
 
-/* ========== HEADER ========== */
-header{
-  background:#3f51b5;
-  color:#fff;
-  padding:14px 20px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  position:sticky;
-  top:0;
-  z-index:1000;
+body {
+  font-family: 'Google Sans', 'Segoe UI', Roboto, sans-serif;
+  background: var(--light-bg);
+  color: var(--text-primary);
+  transition: all 0.3s ease;
+  line-height: 1.6;
 }
-header h1{margin:0;font-size:22px}
 
-/* ========== PROFILE ========== */
-.profile-bubble{
-  background:#fff;
-  color:#3f51b5;
-  padding:6px 14px;
-  border-radius:30px;
-  cursor:pointer;
-  position:relative;
-  font-weight:600;
+a {
+  text-decoration: none;
+  color: var(--google-blue);
 }
-.dropdown{
-  display:none;
-  position:absolute;
-  right:0;
-  margin-top:10px;
-  background:#fff;
-  border-radius:10px;
-  box-shadow:0 10px 30px rgba(0,0,0,.15);
-  overflow:hidden;
+
+/* ========== COLORFUL DIGILIB HEADER ========== */
+header {
+  background: white;
+  padding: 8px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 1px 6px rgba(32,33,36,0.1);
+  border-bottom: 1px solid var(--border-color);
 }
-.dropdown a,.dropdown label{
-  padding:10px 14px;
-  display:block;
-  color:#333;
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
 }
-.dropdown a:hover{background:#f0f0f0}
+
+.logo span:nth-child(1) { 
+  color: var(--google-blue); 
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(66,133,244,0.2);
+}
+.logo span:nth-child(2) { 
+  color: var(--google-red); 
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(234,67,53,0.2);
+}
+.logo span:nth-child(3) { 
+  color: var(--google-yellow); 
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(251,188,5,0.2);
+}
+.logo span:nth-child(4) { 
+  color: var(--google-blue); 
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(66,133,244,0.2);
+}
+.logo span:nth-child(5) { 
+  color: var(--google-green); 
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(52,168,83,0.2);
+}
+.logo span:nth-child(6) { 
+  color: var(--google-red); 
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(234,67,53,0.2);
+}
+.logo span:nth-child(7) { 
+  color: var(--google-yellow); 
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(251,188,5,0.2);
+}
+
+/* Header right section */
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Admin badge */
+.admin-badge {
+  background: var(--google-yellow);
+  color: #202124;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.admin-badge i {
+  font-size: 12px;
+}
+
+/* Profile bubble - Google style */
+.profile-bubble {
+  background: var(--google-blue);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 18px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  border: 2px solid white;
+}
+
+.profile-bubble:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(66,133,244,0.3);
+}
+
+/* Dropdown menu - Google style */
+.dropdown {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 50px;
+  min-width: 200px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  overflow: hidden;
+  z-index: 1000;
+  border: 1px solid var(--border-color);
+}
+
+.dropdown a, .dropdown label {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-primary);
+  transition: all 0.2s;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.dropdown a i, .dropdown label i {
+  width: 20px;
+  color: var(--google-blue);
+}
+
+.dropdown a:hover {
+  background: var(--hover-bg);
+}
+
+/* Dark mode toggle styling */
+.dropdown label {
+  border-top: 1px solid var(--border-color);
+  margin-top: 4px;
+}
 
 /* ========== LAYOUT ========== */
-.wrapper{
-  display:flex;
-  min-height:100vh;
+.wrapper {
+  display: flex;
+  min-height: calc(100vh - 57px);
 }
 
-/* ========== SIDEBAR ========== */
-.sidebar{
-  width:260px;
-  background:#1f2a60;
-  color:#fff;
-  padding:25px 20px;
-  position:fixed;
-  height:100%;
+/* ========== SIDEBAR - WITH LOGO ========== */
+.sidebar {
+  width: 260px;
+  background: white;
+  padding: 24px 12px;
+  position: fixed;
+  height: 100%;
+  border-right: 1px solid var(--border-color);
+  box-shadow: 2px 0 4px rgba(0,0,0,0.02);
 }
-.brand{
-  text-align:center;
-  margin-bottom:30px;
+
+.brand {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 0 8px;
 }
-.brand img{
-  width:110px;
-  max-width:100%;
-  margin-bottom:15px;
+
+.brand img {
+  width: 110px;
+  max-width: 100%;
+  margin-bottom: 15px;
 }
-.brand h2{
-  margin:0;
-  letter-spacing:2px;
-  font-weight:800;
+
+.brand h2 {
+  margin: 0;
+  letter-spacing: 2px;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-size: 24px;
 }
-.nav a{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:12px 15px;
-  border-radius:10px;
-  color:#cfd3ff;
-  margin-bottom:8px;
-  transition:.3s;
-  font-weight:500;
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 20px;
 }
-.nav a:hover{background:#2f3da1;color:#fff}
-.nav a.active{
-  background:#3f51b5;
-  color:#fff;
-  box-shadow:0 8px 20px rgba(63,81,181,.5);
+
+.nav a {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border-radius: 0 24px 24px 0;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s;
+  margin-left: -12px;
+}
+
+.nav a i {
+  width: 24px;
+  font-size: 20px;
+}
+
+.nav a:hover {
+  background: var(--hover-bg);
+  color: var(--google-blue);
+}
+
+.nav a.active {
+  background: #e8f0fe;
+  color: var(--google-blue);
+  font-weight: 600;
+}
+
+.nav a.active i {
+  color: var(--google-blue);
 }
 
 /* ========== CONTENT ========== */
-.content{
-  margin-left:260px;
-  padding:30px;
-  width:100%;
-}
-.card{
-  background:#fff;
-  padding:25px;
-  border-radius:15px;
-  box-shadow:0 10px 30px rgba(0,0,0,.08);
-  margin-bottom:25px;
+.content {
+  margin-left: 260px;
+  padding: 32px;
+  width: 100%;
+  background: var(--light-bg);
 }
 
-/* ========== TABLE ========== */
-.table-wrapper{
-  max-height:420px;
-  overflow-y:auto;
-  border-radius:12px;
-  border:1px solid #e0e0e0;
+/* Google-style cards */
+.card {
+  background: white;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  margin-bottom: 24px;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s;
 }
 
-table{
-  width:100%;
-  border-collapse:collapse;
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+  border-color: var(--google-blue);
 }
 
-thead th{
-  position:sticky;
-  top:0;
-  z-index:2;
-  background:#3f51b5;
-  color:#fff;
-  padding:12px;
+.card h2 {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-td{
-  padding:12px;
-  border-bottom:1px solid #eee;
+.card h2 i {
+  color: var(--google-blue);
+  font-size: 20px;
 }
 
-tr:hover{background:#f9f9f9}
-
-button{
-  background:#3f51b5;
-  color:#fff;
-  border:none;
-  padding:7px 14px;
-  border-radius:8px;
-  cursor:pointer;
-  transition:.3s;
-}
-button:hover{transform:scale(1.05)}
-
-/* ========== FORMS ========== */
-input[type=text], input[type=file], select{
-  padding:12px;
-  border-radius:8px;
-  border:1px solid #ccc;
-  width:100%;
-  max-width:350px;
+/* Upload form styling */
+.upload-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  background: var(--hover-bg);
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
 }
 
-/* ========== SPINNER ========== */
-.spinner{
-  display:none;
-  width:40px;
-  height:40px;
-  border:5px solid #ccc;
-  border-top:5px solid #3f51b5;
-  border-radius:50%;
-  animation:spin 1s linear infinite;
-  margin:10px auto;
-}
-@keyframes spin{
-  0%{transform:rotate(0deg);}
-  100%{transform:rotate(360deg);}
+.file-input-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 250px;
 }
 
-/* ========== MODAL ========== */
-.modal{
-  display:none;
-  position:fixed;
-  top:0; left:0;
-  width:100%; height:100%;
-  background:rgba(0,0,0,0.5);
-  justify-content:center;
-  align-items:center;
+.file-input-wrapper input[type=file] {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  width: 100%;
+  background: white;
+  cursor: pointer;
 }
-.modal-content{
-  background:#fff;
-  padding:25px;
-  border-radius:12px;
-  max-width:450px;
-  width:90%;
-  box-shadow:0 6px 20px rgba(0,0,0,0.2);
+
+.file-input-wrapper input[type=file]::file-selector-button {
+  background: var(--google-blue);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  margin-right: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.file-input-wrapper input[type=file]::file-selector-button:hover {
+  background: #3b78e7;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.checkbox-label input[type=checkbox] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--google-blue);
+}
+
+.upload-btn {
+  background: var(--google-blue);
+  color: white;
+  border: none;
+  padding: 12px 32px;
+  border-radius: 24px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.upload-btn:hover {
+  background: #3b78e7;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(66,133,244,0.4);
+}
+
+.upload-btn i {
+  font-size: 16px;
+}
+
+/* Spinner */
+.spinner {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--google-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Filter container */
+.filter-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-container select {
+  padding: 10px 16px;
+  border-radius: 24px;
+  border: 1px solid var(--border-color);
+  outline: none;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  min-width: 200px;
+  color: var(--text-primary);
+}
+
+.filter-container select:focus {
+  border-color: var(--google-blue);
+  box-shadow: 0 1px 6px rgba(66,133,244,0.2);
+}
+
+/* Table styling - Google style */
+.table-wrapper {
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  background: white;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead th {
+  background: #f8f9fa;
+  color: var(--text-secondary);
+  font-weight: 500;
+  font-size: 14px;
+  padding: 16px;
+  text-align: left;
+  border-bottom: 2px solid var(--border-color);
+}
+
+tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: all 0.2s;
+}
+
+tbody tr:hover {
+  background: var(--hover-bg);
+}
+
+td {
+  padding: 16px;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+/* Status badges */
+.status-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+}
+
+.status-public {
+  background: #e6f4ea;
+  color: #137333;
+}
+
+.status-private {
+  background: #fce8e6;
+  color: #a50e0e;
+}
+
+/* Action buttons */
+.action-btn {
+  background: white;
+  color: var(--google-blue);
+  border: 1px solid var(--border-color);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.action-btn i {
+  font-size: 12px;
+}
+
+.action-btn:hover {
+  background: var(--google-blue);
+  color: white;
+  border-color: var(--google-blue);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(66,133,244,0.3);
+}
+
+.action-btn.delete:hover {
+  background: var(--google-red);
+  border-color: var(--google-red);
+}
+
+/* Edit Modal */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  backdrop-filter: blur(2px);
+}
+
+.modal-content {
+  background: white;
+  padding: 32px;
+  border-radius: 20px;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.modal-content h3 {
+  margin-bottom: 20px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-content h3 i {
+  color: var(--google-blue);
+}
+
+.modal-content select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.modal-actions button {
+  padding: 10px 24px;
+  border-radius: 24px;
+  border: none;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-actions .save-btn {
+  background: var(--google-blue);
+  color: white;
+}
+
+.modal-actions .save-btn:hover {
+  background: #3b78e7;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(66,133,244,0.4);
+}
+
+.modal-actions .cancel-btn {
+  background: white;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.modal-actions .cancel-btn:hover {
+  background: var(--hover-bg);
+}
+
+/* Upload preview overlay */
+.upload-preview {
+  margin-top: 20px;
+  padding: 16px;
+  background: var(--hover-bg);
+  border-radius: 8px;
 }
 
 /* ========== DARK MODE ========== */
-.dark-mode{
-  background:#121212;
-  color:#eee;
+.dark-mode {
+  background: var(--dark-bg);
+  color: #e8eaed;
 }
-.dark-mode .card{background:#1e1e1e}
-.dark-mode .sidebar{background:#111}
-.dark-mode th{background:#333}
-.dark-mode button{background:#555}
 
-/* ========== MOBILE ========== */
-@media(max-width:768px){
-  .sidebar{
-    position:relative;
-    width:100%;
-    height:auto;
+.dark-mode header {
+  background: #2d2e30;
+  border-bottom-color: #5f6368;
+}
+
+.dark-mode .sidebar {
+  background: #2d2e30;
+  border-right-color: #5f6368;
+}
+
+.dark-mode .card {
+  background: #2d2e30;
+  border-color: #5f6368;
+  color: #e8eaed;
+}
+
+.dark-mode .card:hover {
+  border-color: var(--google-blue);
+}
+
+.dark-mode .brand h2 {
+  color: #e8eaed;
+}
+
+.dark-mode .nav a {
+  color: #bdc1c6;
+}
+
+.dark-mode .nav a:hover {
+  background: #3c4043;
+  color: white;
+}
+
+.dark-mode .nav a.active {
+  background: #394457;
+  color: var(--google-blue);
+}
+
+.dark-mode input, 
+.dark-mode select,
+.dark-mode .file-input-wrapper input[type=file] {
+  background: #3c4043;
+  border-color: #5f6368;
+  color: #e8eaed;
+}
+
+.dark-mode table {
+  background: #2d2e30;
+}
+
+.dark-mode thead th {
+  background: #3c4043;
+  color: #bdc1c6;
+  border-bottom-color: #5f6368;
+}
+
+.dark-mode tbody tr {
+  border-bottom-color: #5f6368;
+}
+
+.dark-mode tbody tr:hover {
+  background: #3c4043;
+}
+
+.dark-mode td {
+  color: #e8eaed;
+}
+
+.dark-mode .dropdown {
+  background: #2d2e30;
+  border-color: #5f6368;
+}
+
+.dark-mode .dropdown a {
+  color: #e8eaed;
+}
+
+.dark-mode .dropdown a:hover {
+  background: #3c4043;
+}
+
+.dark-mode .modal-content {
+  background: #2d2e30;
+  border: 1px solid #5f6368;
+}
+
+.dark-mode .modal-actions .cancel-btn {
+  background: #3c4043;
+  color: #e8eaed;
+  border-color: #5f6368;
+}
+
+/* ========== MOBILE RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    left: -260px;
+    transition: left 0.3s ease;
+    z-index: 1000;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.1);
   }
-  .content{margin-left:0}
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  .content {
+    margin-left: 0;
+    padding: 16px;
+  }
+
+  header {
+    padding: 8px 16px;
+  }
+
+  .logo {
+    font-size: 22px;
+  }
+
+  .upload-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .file-input-wrapper {
+    width: 100%;
+  }
+
+  .upload-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .filter-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-container select {
+    width: 100%;
+  }
+
+  table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  td, th {
+    white-space: nowrap;
+  }
+
+  .menu-toggle {
+    display: block !important;
+  }
+
+  .action-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .sidebar {
+    width: 220px;
+  }
+
+  .content {
+    margin-left: 220px;
+    padding: 24px;
+  }
+}
+
+/* Menu toggle button - hidden on desktop */
+.menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-right: 12px;
+}
+
+.menu-toggle:hover {
+  color: var(--google-blue);
+}
+
+/* Overlay for mobile */
+.overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 999;
+  backdrop-filter: blur(2px);
+}
+
+.overlay.show {
+  display: block;
+}
+
+/* Quick stats cards */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  border-color: var(--google-blue);
+}
+
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e8f0fe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--google-blue);
+  font-size: 20px;
+}
+
+.stat-info h4 {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.stat-info p {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 </style>
 </head>
@@ -230,54 +880,121 @@ input[type=text], input[type=file], select{
 <body>
 
 <header>
-  <h1></h1>
-  <div class="profile-bubble" id="profileBubble">
-    <%= user %>
-    <div class="dropdown" id="profileDropdown">
-      <a href="/logout">Logout</a>
-      <label><input type="checkbox" id="darkToggle"> Dark Mode</label>
+  <!-- Mobile menu toggle -->
+  <button class="menu-toggle" id="menuToggle">
+    <i class="fas fa-bars"></i>
+  </button>
+
+  <!-- Colorful DIGILIB logo -->
+  <div class="logo">
+    <span>D</span><span>I</span><span>G</span><span>I</span><span>L</span><span>I</span><span>B</span>
+  </div>
+
+  <!-- Header right section -->
+  <div class="header-right">
+    <!-- Admin badge -->
+    <div class="admin-badge">
+      <i class="fas fa-shield-alt"></i> ADMIN
+    </div>
+
+    <!-- Profile bubble -->
+    <div class="profile-bubble" id="profileBubble">
+      <%= user ? user.charAt(0).toUpperCase() : 'A' %>
+      <div class="dropdown" id="profileDropdown">
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        <label><i class="fas fa-moon"></i> <input type="checkbox" id="darkToggle" style="margin-left: 8px;"> Dark Mode</label>
+      </div>
     </div>
   </div>
 </header>
 
 <div class="wrapper">
+  <!-- Overlay for mobile -->
+  <div class="overlay" id="overlay"></div>
 
   <!-- SIDEBAR -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
     <div class="brand">
       <img src="/logo.png" alt="DIGILIB">
       <h2>DIGILIB</h2>
     </div>
 
     <nav class="nav">
-      <a href="#" id="uploadLink" class="active">📤 Upload PDFs</a>
-      <a href="/admin/download-requests">📥 Download Requests</a>
-      <a href="/admin/analytics">📊 Analytics</a>
+      <a href="#" id="uploadLink" class="active"><i class="fas fa-upload"></i> Upload PDFs</a>
+      <a href="/admin/download-requests"><i class="fas fa-download"></i> Download Requests</a>
+      <a href="/admin/analytics"><i class="fas fa-chart-line"></i> Analytics</a>
     </nav>
   </aside>
 
   <!-- CONTENT -->
   <main class="content">
 
+    <!-- Quick Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-file-pdf"></i>
+        </div>
+        <div class="stat-info">
+          <h4>Total PDFs</h4>
+          <p><%= pdfs.length %></p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-globe"></i>
+        </div>
+        <div class="stat-info">
+          <h4>Public</h4>
+          <p><%= pdfs.filter(p => !p.is_private).length %></p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-lock"></i>
+        </div>
+        <div class="stat-info">
+          <h4>Private</h4>
+          <p><%= pdfs.filter(p => p.is_private).length %></p>
+        </div>
+      </div>
+    </div>
+
     <!-- UPLOAD SECTION -->
     <div class="card" id="uploadSection">
-      <h2>Upload PDF</h2>
-      <form id="uploadForm">
-        <input type="file" name="pdf" accept=".pdf" required>
-        <label style="margin-left:10px;"><input type="checkbox" name="private"> Private</label>
-        <button type="submit">Upload</button>
+      <h2><i class="fas fa-cloud-upload-alt"></i> Upload New Thesis</h2>
+      
+      <form id="uploadForm" class="upload-form">
+        <div class="file-input-wrapper">
+          <input type="file" name="pdf" accept=".pdf" required>
+        </div>
+        
+        <label class="checkbox-label">
+          <input type="checkbox" name="private"> <i class="fas fa-lock"></i> Mark as Private
+        </label>
+        
+        <button type="submit" class="upload-btn">
+          <i class="fas fa-cloud-upload-alt"></i> Upload PDF
+        </button>
       </form>
+      
       <div class="spinner" id="spinner"></div>
-      <div id="uploadPreview"></div>
+      <div id="uploadPreview" class="upload-preview"></div>
 
-      <h2>All PDFs</h2>
-      <label for="courseFilter">Filter by Course:</label>
-  <select id="courseFilter">
-  <option value="all">All</option>
-  <% clusters.forEach((c,i)=>{ %>
-    <option value="<%= i %>"><%= c %></option>
-  <% }) %>
-</select>
+      <h2 style="margin-top: 32px;"><i class="fas fa-list"></i> All PDFs</h2>
+      
+      <div class="filter-container">
+        <select id="courseFilter">
+          <option value="all">All Courses</option>
+          <% clusters.forEach((c,i)=>{ %>
+            <option value="<%= i %>"><%= c %></option>
+          <% }) %>
+        </select>
+        <span style="color: var(--text-secondary); font-size: 14px;">
+          <i class="fas fa-file"></i> <%= pdfs.length %> total
+        </span>
+      </div>
+
       <div class="table-wrapper">
         <table id="pdfTable">
           <thead>
@@ -292,15 +1009,21 @@ input[type=text], input[type=file], select{
           <tbody>
             <% pdfs.forEach(pdf => { %>
             <tr data-id="<%= pdf.id %>" data-cluster="<%= pdf.cluster %>">
-              <td><%= pdf.title %></td>
-              <td><%= clusters[pdf.cluster] || 'Unknown' %></td>
-              <td><%= pdf.is_private ? 'Private' : 'Public' %></td>
-              <td><%= pdf.uploader %></td>
+              <td><i class="fas fa-file-pdf" style="color: var(--google-red); margin-right: 8px;"></i> <%= pdf.title %></td>
+              <td><span class="course-badge" style="background:#e8f0fe; color:var(--google-blue); padding:4px 12px; border-radius:16px;"><%= clusters[pdf.cluster] || 'Unknown' %></span></td>
               <td>
-                <a href="/view-admin/<%= pdf.id %>"><button>View</button></a>
-                <button class="editBtn">Edit</button>
+                <span class="status-badge <%= pdf.is_private ? 'status-private' : 'status-public' %>">
+                  <%= pdf.is_private ? 'Private' : 'Public' %>
+                </span>
+              </td>
+              <td><i class="fas fa-user-circle" style="color:var(--text-secondary); margin-right:4px;"></i> <%= pdf.uploader %></td>
+              <td>
+                <a href="/view-admin/<%= pdf.id %>">
+                  <button class="action-btn"><i class="fas fa-eye"></i> View</button>
+                </a>
+                <button class="action-btn editBtn"><i class="fas fa-edit"></i> Edit</button>
                 <form action="/delete/<%= pdf.id %>" method="POST" style="display:inline;">
-                  <button type="submit">Delete</button>
+                  <button type="submit" class="action-btn delete" onclick="return confirm('Are you sure you want to delete this thesis?')"><i class="fas fa-trash"></i> Delete</button>
                 </form>
               </td>
             </tr>
@@ -310,14 +1033,13 @@ input[type=text], input[type=file], select{
       </div>
     </div>
 
-
   </main>
 </div>
 
 <!-- EDIT MODAL -->
 <div class="modal" id="editModal">
   <div class="modal-content">
-    <h3>Edit Cluster</h3>
+    <h3><i class="fas fa-edit"></i> Edit Course Cluster</h3>
     <form id="editForm">
       <input type="hidden" name="id" id="editId">
       <select name="course" id="editCourse">
@@ -325,82 +1047,144 @@ input[type=text], input[type=file], select{
           <option value="<%= i %>"><%= c %></option>
         <% }) %>
       </select>
-      <div style="margin-top:15px;">
-        <button type="submit">Save</button>
-        <button type="button" onclick="closeModal()">Cancel</button>
+      <div class="modal-actions">
+        <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="save-btn">Save Changes</button>
       </div>
     </form>
   </div>
 </div>
 
 <script>
-// CORE LOGIC UNTOUCHED
+// CORE LOGIC (PRESERVED)
 const clusters = <%- JSON.stringify(clusters) %>;
 const spinner = document.getElementById('spinner');
 const preview = document.getElementById('uploadPreview');
 
+// Profile dropdown
 const bubble = document.getElementById('profileBubble');
 const dropdown = document.getElementById('profileDropdown');
-bubble.addEventListener('click',()=>{ dropdown.style.display = dropdown.style.display==='block'?'none':'block'; });
+bubble.addEventListener('click', (e) => {
+  e.stopPropagation();
+  dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+});
 
+// Close dropdown when clicking outside
+document.addEventListener('click', () => {
+  dropdown.style.display = 'none';
+});
+
+dropdown.addEventListener('click', (e) => e.stopPropagation());
+
+// Dark mode toggle
 const darkToggle = document.getElementById('darkToggle');
-darkToggle.addEventListener('change',()=>{ document.body.classList.toggle('dark-mode', darkToggle.checked); });
+darkToggle.addEventListener('change', () => { 
+  document.body.classList.toggle('dark-mode', darkToggle.checked);
+  localStorage.setItem('darkMode', darkToggle.checked);
+});
 
-document.getElementById('uploadForm').addEventListener('submit', async (e)=>{
+// Load dark mode preference
+const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+darkToggle.checked = savedDarkMode;
+if (savedDarkMode) document.body.classList.add('dark-mode');
+
+// Mobile menu toggle
+const menuToggle = document.getElementById('menuToggle');
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+
+if (menuToggle) {
+  menuToggle.onclick = () => {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('show');
+  };
+}
+
+if (overlay) {
+  overlay.onclick = () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('show');
+  };
+}
+
+// Active nav link
+document.querySelectorAll('.nav a').forEach(link => {
+  if (window.location.pathname === link.getAttribute('href')) {
+    link.classList.add('active');
+  }
+});
+
+// UPLOAD FORM
+document.getElementById('uploadForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const fileInput = e.target.pdf;
-  if(fileInput.files[0].type!=='application/pdf'){ alert('Only PDF files allowed'); return; }
+  if (fileInput.files[0] && fileInput.files[0].type !== 'application/pdf') { 
+    alert('Only PDF files allowed'); 
+    return; 
+  }
 
   const data = new FormData(e.target);
-  spinner.style.display='block';
-  const res = await fetch('/upload', { method:'POST', body:data });
-  const json = await res.json();
-  spinner.style.display='none';
+  spinner.style.display = 'block';
+  
+  try {
+    const res = await fetch('/upload', { method: 'POST', body: data });
+    const json = await res.json();
+    spinner.style.display = 'none';
 
-  if(json.success){
-    const overlay = document.createElement('div');
-    overlay.style.position='fixed';
-    overlay.style.top=0;
-    overlay.style.left=0;
-    overlay.style.width='100%';
-    overlay.style.height='100%';
-    overlay.style.background='rgba(0,0,0,0.7)';
-    overlay.style.display='flex';
-    overlay.style.justifyContent='center';
-    overlay.style.alignItems='center';
-    overlay.style.zIndex=9999;
-    overlay.innerHTML = `
-      <div style="background:#fff; padding:30px 50px; border-radius:10px; text-align:center; font-size:18px;">
-        <h2>Upload Successful ✅</h2>
-        <p><strong>Title:</strong> ${json.title}</p>
-        <p><strong>Cluster:</strong> ${clusters[json.cluster]}</p>
-        <p><strong>Confidence:</strong> ${(json.confidence*100).toFixed(2)}%</p>
-        <p>Refreshing page...</p>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    setTimeout(()=> location.reload(), 2000);
-  } else {
-    const overlay = document.createElement('div');
-    overlay.style.position='fixed';
-    overlay.style.top=0;
-    overlay.style.left=0;
-    overlay.style.width='100%';
-    overlay.style.height='100%';
-    overlay.style.background='rgba(0,0,0,0.7)';
-    overlay.style.display='flex';
-    overlay.style.justifyContent='center';
-    overlay.style.alignItems='center';
-    overlay.style.zIndex=9999;
-    overlay.innerHTML = `
-      <div style="background:#fff; padding:30px 50px; border-radius:10px; text-align:center; font-size:18px; color:red;">
-        <h2>Upload Failed ❌</h2>
-        <p>${json.message}</p>
-        <p>Closing in 2 seconds...</p>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    setTimeout(()=> overlay.remove(), 2000);
+    if (json.success) {
+      // Show success overlay
+      const overlay = document.createElement('div');
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.background = 'rgba(0,0,0,0.7)';
+      overlay.style.display = 'flex';
+      overlay.style.justifyContent = 'center';
+      overlay.style.alignItems = 'center';
+      overlay.style.zIndex = '9999';
+      overlay.style.backdropFilter = 'blur(4px)';
+      overlay.innerHTML = `
+        <div style="background:white; padding:40px; border-radius:20px; text-align:center; font-size:18px; max-width:400px;">
+          <i class="fas fa-check-circle" style="color:#34a853; font-size:64px; margin-bottom:20px;"></i>
+          <h2 style="color:#202124; margin-bottom:16px;">Upload Successful!</h2>
+          <p><strong>Title:</strong> ${json.title}</p>
+          <p><strong>Cluster:</strong> ${clusters[json.cluster]}</p>
+          <p><strong>Confidence:</strong> ${(json.confidence * 100).toFixed(2)}%</p>
+          <p style="color:#5f6368; margin-top:20px;">Refreshing page...</p>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      setTimeout(() => location.reload(), 2000);
+    } else {
+      // Show error overlay
+      const overlay = document.createElement('div');
+      overlay.style.position = 'fixed';
+      overlay.style.top = '0';
+      overlay.style.left = '0';
+      overlay.style.width = '100%';
+      overlay.style.height = '100%';
+      overlay.style.background = 'rgba(0,0,0,0.7)';
+      overlay.style.display = 'flex';
+      overlay.style.justifyContent = 'center';
+      overlay.style.alignItems = 'center';
+      overlay.style.zIndex = '9999';
+      overlay.style.backdropFilter = 'blur(4px)';
+      overlay.innerHTML = `
+        <div style="background:white; padding:40px; border-radius:20px; text-align:center; font-size:18px; max-width:400px;">
+          <i class="fas fa-times-circle" style="color:#ea4335; font-size:64px; margin-bottom:20px;"></i>
+          <h2 style="color:#202124; margin-bottom:16px;">Upload Failed</h2>
+          <p style="color:#5f6368;">${json.message}</p>
+          <p style="color:#5f6368; margin-top:20px;">Closing in 2 seconds...</p>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+      setTimeout(() => overlay.remove(), 2000);
+    }
+  } catch (error) {
+    spinner.style.display = 'none';
+    alert('Upload failed: ' + error.message);
   }
 });
 
@@ -408,47 +1192,41 @@ document.getElementById('uploadForm').addEventListener('submit', async (e)=>{
 const editModal = document.getElementById('editModal');
 const editId = document.getElementById('editId');
 const editCourse = document.getElementById('editCourse');
-function attachEditListeners(){
-  document.querySelectorAll('.editBtn').forEach(btn=>{
-    btn.onclick = ()=>{
+
+function attachEditListeners() {
+  document.querySelectorAll('.editBtn').forEach(btn => {
+    btn.onclick = () => {
       const tr = btn.closest('tr');
       editId.value = tr.dataset.id;
-      editCourse.value = Array.from(editCourse.options).findIndex(opt=>opt.text===tr.children[1].textContent);
-      editModal.style.display='flex';
+      editCourse.value = Array.from(editCourse.options).findIndex(opt => opt.text === tr.children[1].textContent);
+      editModal.style.display = 'flex';
     };
   });
 }
-function closeModal(){ editModal.style.display='none'; }
+
+function closeModal() { 
+  editModal.style.display = 'none'; 
+}
+
 attachEditListeners();
-document.getElementById('editForm').addEventListener('submit', async e=>{
+
+document.getElementById('editForm').addEventListener('submit', async e => {
   e.preventDefault();
   const id = editId.value;
   const course = editCourse.value;
-  const res = await fetch(`/update-course/${id}`,{
-    method:'POST',
-    headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body:`course=${course}`
+  const res = await fetch(`/update-course/${id}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `course=${course}`
   });
-  if(res.ok){
+  if (res.ok) {
     const tr = document.querySelector(`tr[data-id="${id}"]`);
     tr.children[1].textContent = editCourse.options[editCourse.selectedIndex].text;
     closeModal();
   }
 });
 
-// TOGGLE SECTIONS
-const uploadLink = document.getElementById('uploadLink');
-const analyticsLink = document.getElementById('analyticsLink');
-const uploadSection = document.getElementById('uploadSection');
-const analyticsSection = document.getElementById('analyticsSection');
-
-uploadLink.addEventListener('click',()=>{
-  uploadSection.style.display='block';
-  analyticsSection.style.display='none';
-  uploadLink.classList.add('active');
-  analyticsLink.classList.remove('active');
-});
-
+// COURSE FILTER
 const courseFilter = document.getElementById('courseFilter');
 courseFilter.addEventListener('change', () => {
   const selected = courseFilter.value;
@@ -464,13 +1242,13 @@ courseFilter.addEventListener('change', () => {
     }
   });
 });
+
+// Handle page cache
 window.addEventListener('pageshow', function (event) {
   if (event.persisted) {
-    // Page was loaded from back/forward cache
     window.location.reload();
   }
 });
-
 </script>
 
 </body>

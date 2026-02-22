@@ -1016,6 +1016,14 @@ app.get('/api/test-ml', async (req, res) => {
     });
   }
 });
+// Add this health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
 /* ================= START SERVER ================= */
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
