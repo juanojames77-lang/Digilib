@@ -210,7 +210,117 @@ app.get('/user/analytics', requireLogin, (req, res) => {
     clusters: ['BSCS','BSED-MATH','BSES','BSHM','BTLED-HE','BEED'] // same cluster list as admin
   });
 });
+// ========== TOPICS API ROUTES ==========
 
+/**
+ * Get topics for a specific PDF
+ */
+app.get('/api/topics/:pdfId', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT topic_name, topic_weight 
+       FROM thesis_topics 
+       WHERE pdf_id = $1 
+       ORDER BY topic_weight DESC 
+       LIMIT 10`,
+      [req.params.pdfId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching topics:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Get all topics for a specific course
+ */
+app.get('/api/course-topics/:course', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT DISTINCT t.topic_name 
+       FROM thesis_topics t
+       JOIN pdfs p ON t.pdf_id = p.id
+       WHERE p.cluster = $1 AND p.is_private = false
+       ORDER BY t.topic_name`,
+      [req.params.course]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching course topics:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Get popular topics across all theses
+ */
+app.get('/api/popular-topics', async (req, res) => {
+  try {
+    const limit = req.query.limit || 20;
+    const result = await pool.query(
+      `SELECT topic_name, COUNT(*) as frequency, AVG(topic_weight) as avg_weight
+       FROM thesis_topics t
+       JOIN pdfs p ON t.pdf_id = p.id
+       WHERE p.is_private = false
+       GROUP BY topic_name
+       ORDER BY frequency DESC
+       LIMIT $1`,
+      [limit]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching popular topics:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * Search theses by topic
+ */
+app.get('/search-by-topic', requireLogin, async (req, res) => {
+  try {
+    const { topic, course } = req.query;
+    
+    if (!topic) {
+      return res.redirect('/');
+    }
+    
+    const result = await pool.query(
+      `SELECT p.*, 
+              array_agg(t.topic_name) as topic_list
+       FROM pdfs p
+       LEFT JOIN thesis_topics t ON p.id = t.pdf_id
+       WHERE (t.topic_name ILIKE $1 OR p.title ILIKE $1)
+         AND ($2 = '' OR p.cluster = $2::int)
+         AND p.is_private = false
+       GROUP BY p.id
+       ORDER BY p.id DESC`,
+      [`%${topic}%`, course || '']
+    );
+    
+    const clusters = ['BSCS', 'BSED-MATH', 'BSES', 'BSHM', 'BTLED-HE', 'BEED'];
+    
+    // Format results for display
+    const results = result.rows.map(row => ({
+      ...row,
+      course: clusters[row.cluster] || 'Unknown',
+      topics: row.topic_list || []
+    }));
+    
+    res.render('topic-results', {
+      results: results,
+      query: topic,
+      course: course,
+      clusters: clusters,
+      username: req.session.user
+    });
+    
+  } catch (err) {
+    console.error('Error searching by topic:', err);
+    res.status(500).send('Search failed');
+  }
+});
 /* ================= ADMIN DASHBOARD ================= */
 app.get('/admin', requireLogin, isAdmin, async (req,res)=>{
   const pdfsResult = await pool.query('SELECT * FROM pdfs ORDER BY id DESC');
@@ -229,11 +339,20 @@ app.get('/admin', requireLogin, isAdmin, async (req,res)=>{
 /* ================= UPLOAD ================= */
 /* ================= RENDER ML API CONFIG ================= */
 // ⬇️⬇️⬇️ UPDATE THIS WITH YOUR ACTUAL ML API URL ⬇️⬇️⬇️
-const ML_API_URL = 'https://digilib-api-ml.onrender.com/predict';
+const ML_API_URL = 'https://digilib-api-ml.onrender.com'; // Remove '/predict' from the end
 
-/* ================= UPLOAD WITH ML API ================= */
+/* ================= UPLOAD WITH ML API (COURSE + TOPICS) ================= */
 app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req, res) => {
   const isPrivate = req.body.private === 'on';
+  const selectedCourse = req.body.course; // NEW: Admin selects course
+  
+  // NEW: Validate course selection
+  if (selectedCourse === undefined || selectedCourse === '') {
+    return res.json({ 
+      success: false, 
+      message: 'Please select a course' 
+    });
+  }
   
   try {
     // 1. Validate
@@ -242,7 +361,7 @@ app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req, res
     }
 
     const filename = path.parse(req.file.originalname).name;
-    console.log(`📤 Uploading: ${filename}`);
+    console.log(`📤 Uploading: ${filename} to course: ${selectedCourse}`);
 
     // 2. Get PDF from Cloudinary
     const cloudinaryResponse = await fetch(req.file.path);
@@ -254,12 +373,14 @@ app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req, res
       type: 'application/pdf' 
     }), `${filename}.pdf`);
 
-    // 4. Call ML API
-    console.log(`🤖 Calling ML API: ${ML_API_URL}`);
+    // 4. Call ML API with topics endpoint
+    console.log(`🤖 Calling ML API: ${ML_API_URL}/predict-with-topics`);
     
     let mlResult;
+    let topics = [];
+    
     try {
-      const response = await fetch(ML_API_URL, {
+      const response = await fetch(`${ML_API_URL}/predict-with-topics`, {
         method: 'POST',
         body: formData,
         timeout: 60000 // 60 seconds
@@ -270,6 +391,10 @@ app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req, res
       if (response.ok) {
         mlResult = await response.json();
         console.log('✅ ML API Result:', JSON.stringify(mlResult, null, 2));
+        
+        // Extract topics from result
+        topics = mlResult.topics || [];
+        console.log('📊 Extracted topics:', topics.map(t => t.topic).join(', '));
       } else {
         console.log(`❌ ML API Error: ${response.status}`);
         mlResult = { success: false, cluster: 0, confidence: 0.78 };
@@ -279,56 +404,69 @@ app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req, res
       mlResult = { success: false, cluster: 0, confidence: 0.78 };
     }
 
-    // 5. Get prediction results
+    // 5. Get prediction results (optional - you can still use this)
     let clusterIndex = 0;
     let confidence = 0.5;
     
     if (mlResult && mlResult.success) {
-      // Success from ML API
       clusterIndex = mlResult.cluster || 0;
       confidence = mlResult.confidence || 0.5;
-      
       console.log(`✅ ML Prediction: Cluster ${clusterIndex}, Confidence ${confidence}`);
-    } else if (mlResult && mlResult.cluster !== undefined) {
-      // Some APIs return cluster directly
-      clusterIndex = mlResult.cluster;
-      confidence = mlResult.confidence || 0.5;
-    } else {
-      // Fallback
-      console.log(`⚠️ Using default values`);
     }
 
-    // 6. Validate ranges (0-5 for your 6 clusters)
+    // 6. Validate ranges
     clusterIndex = Math.max(0, Math.min(5, clusterIndex));
     confidence = Math.max(0.1, Math.min(1.0, confidence));
     
     const clusterNames = ['BSCS', 'BSED-MATH', 'BSES', 'BSHM', 'BTLED-HE', 'BEED'];
-    const clusterName = clusterNames[clusterIndex];
+    const clusterName = clusterNames[selectedCourse]; // Use admin-selected course
 
-    console.log(`🎯 Final: ${clusterName} (Cluster ${clusterIndex}), Confidence ${confidence.toFixed(2)}`);
+    console.log(`🎯 Course: ${clusterName} (selected by admin)`);
+    console.log(`🎯 ML predicted: ${clusterNames[clusterIndex]} (for reference)`);
 
     // 7. Save to database
+    const dbResult = await pool.query(
+      `INSERT INTO pdfs(
+        title, cluster, url, is_private, uploader, confidence
+      ) VALUES($1, $2, $3, $4, $5, $6) RETURNING id`,
+      [filename, parseInt(selectedCourse), req.file.path, isPrivate, 
+       req.session.user, confidence]
+    );
+    
+    const pdfId = dbResult.rows[0].id;
+    console.log(`💾 Saved to database with ID: ${pdfId}`);
+
+    // 8. Save topics to database (NEW)
+    if (topics && topics.length > 0) {
+      for (const topic of topics) {
+        await pool.query(
+          'INSERT INTO thesis_topics(pdf_id, topic_name, topic_weight) VALUES($1, $2, $3)',
+          [pdfId, topic.topic, topic.score]
+        );
+      }
+      console.log(`✅ Saved ${topics.length} topics for PDF ID: ${pdfId}`);
+    }
+
+    // 9. Log upload history
     await pool.query(
-      'INSERT INTO pdfs(title, cluster, url, is_private, uploader, confidence) VALUES($1,$2,$3,$4,$5,$6)',
-      [filename, clusterIndex, req.file.path, isPrivate, req.session.user, confidence]
+      'INSERT INTO upload_history(title, course, uploaded_by) VALUES($1, $2, $3)',
+      [filename, selectedCourse, req.session.user]
     );
 
-    await pool.query(
-      'INSERT INTO upload_history(title, course, uploaded_by) VALUES($1,$2,$3)',
-      [filename, clusterIndex, req.session.user]
-    );
-
-    console.log(`💾 Saved to database: ${filename}`);
-
-    // 8. Return success
+    // 10. Return success with topics
     res.json({
       success: true,
       title: filename,
-      cluster: clusterIndex,
-      cluster_name: clusterName,
-      confidence: confidence.toFixed(2),
-      api_used: mlResult && mlResult.success === true,
-      message: `Predicted as ${clusterName} with ${(confidence * 100).toFixed(1)}% confidence`
+      course: clusterNames[selectedCourse],
+      course_id: parseInt(selectedCourse),
+      ml_prediction: {
+        cluster: clusterIndex,
+        cluster_name: clusterNames[clusterIndex],
+        confidence: confidence
+      },
+      topics: topics.map(t => t.topic), // Just the topic names
+      full_topics: topics, // Full topic objects with scores
+      message: `Uploaded to ${clusterNames[selectedCourse]} with ${topics.length} topics extracted`
     });
 
   } catch (error) {
@@ -338,23 +476,24 @@ app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req, res
     try {
       const filename = req.file ? path.parse(req.file.originalname).name : 'unknown';
       
-      await pool.query(
-        'INSERT INTO pdfs(title, cluster, url, is_private, uploader, confidence) VALUES($1,$2,$3,$4,$5,$6)',
+      const dbResult = await pool.query(
+        `INSERT INTO pdfs(
+          title, cluster, url, is_private, uploader, confidence
+        ) VALUES($1, $2, $3, $4, $5, $6) RETURNING id`,
         [filename, 0, req.file?.path || '', isPrivate, req.session.user, 0.5]
       );
       
       res.json({
         success: true,
         title: filename,
-        cluster: 0,
-        cluster_name: 'BSCS',
-        confidence: 0.5,
-        api_used: false,
-        fallback: true,
-        message: 'Uploaded with default values'
+        course: 'BSCS',
+        course_id: 0,
+        topics: [],
+        message: 'Uploaded with default values (ML failed)'
       });
       
     } catch (fallbackError) {
+      console.error('💥 Fallback error:', fallbackError);
       res.json({ 
         success: false, 
         message: 'Upload failed completely' 

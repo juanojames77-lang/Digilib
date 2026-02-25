@@ -150,7 +150,82 @@ header {
   z-index: 1000;
   border: 1px solid var(--border-color);
 }
+/* Topic badges */
+.topic-badge {
+  background: #e8f0fe;
+  color: var(--google-blue);
+  padding: 2px 8px;
+  border-radius: 16px;
+  font-size: 11px;
+  margin: 2px;
+  display: inline-block;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
 
+.topic-badge:hover {
+  background: var(--google-blue);
+  color: white;
+  transform: scale(1.05);
+}
+
+.topics-cell {
+  max-width: 200px;
+  line-height: 1.8;
+}
+
+.topic-placeholder {
+  color: #999;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.no-topics {
+  color: #999;
+  font-size: 12px;
+}
+
+/* Topic filter dropdown */
+#topicFilter {
+  padding: 10px 16px;
+  border-radius: 24px;
+  border: 1px solid var(--border-color);
+  outline: none;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  min-width: 200px;
+  color: var(--text-primary);
+  margin-left: 10px;
+}
+
+#topicFilter:focus {
+  border-color: var(--google-blue);
+  box-shadow: 0 1px 6px rgba(66,133,244,0.2);
+}
+
+#topicFilter:disabled {
+  background: var(--hover-bg);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Dark mode for topic filter */
+.dark-mode #topicFilter {
+  background: #3c4043;
+  border-color: #5f6368;
+  color: #e8eaed;
+}
+
+.dark-mode .topic-badge {
+  background: #394457;
+  color: #8ab4f8;
+}
+
+.dark-mode .topic-badge:hover {
+  background: #8ab4f8;
+  color: #202124;
+}
 .dropdown a, .dropdown label {
   padding: 12px 16px;
   display: flex;
@@ -803,36 +878,40 @@ td {
       <!-- SCROLLABLE TABLE -->
       <div class="table-wrapper">
         <table id="pdfTable">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Course</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <% if (pdfs.length === 0) { %>
-              <tr>
-                <td colspan="3" style="text-align: center; padding: 40px; color: var(--text-secondary);">
-                  <i class="fas fa-folder-open" style="font-size: 48px; opacity: 0.5; margin-bottom: 16px; display: block;"></i>
-                  No theses available yet
-                </td>
-              </tr>
-            <% } else { %>
-              <% pdfs.forEach(pdf => { %>
-              <tr data-cluster="<%= pdf.cluster %>">
-                <td><i class="fas fa-file-pdf" style="color: var(--google-red); margin-right: 8px;"></i> <%= pdf.title %></td>
-                <td><span class="course-badge"><%= clusters[pdf.cluster] || 'Unknown' %></span></td>
-                <td>
-                  <a href="/view/<%= pdf.id %>">
-                    <button class="view-btn"><i class="fas fa-eye"></i> View</button>
-                  </a>
-                </td>
-              </tr>
-              <% }) %>
-            <% } %>
-          </tbody>
-        </table>
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Course</th>
+      <th>Topics</th>  <!-- NEW COLUMN -->
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if (pdfs.length === 0) { %>
+      <tr>
+        <td colspan="4" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+          <i class="fas fa-folder-open" style="font-size: 48px; opacity: 0.5; margin-bottom: 16px; display: block;"></i>
+          No theses available yet
+        </td>
+      </tr>
+    <% } else { %>
+      <% pdfs.forEach(pdf => { %>
+      <tr data-cluster="<%= pdf.cluster %>" data-id="<%= pdf.id %>">
+        <td><i class="fas fa-file-pdf" style="color: var(--google-red); margin-right: 8px;"></i> <%= pdf.title %></td>
+        <td><span class="course-badge"><%= clusters[pdf.cluster] || 'Unknown' %></span></td>
+        <td class="topics-cell" data-pdf-id="<%= pdf.id %>">
+          <span class="topic-placeholder">Loading topics...</span>
+        </td>
+        <td>
+          <a href="/view/<%= pdf.id %>">
+            <button class="view-btn"><i class="fas fa-eye"></i> View</button>
+          </a>
+        </td>
+      </tr>
+      <% }) %>
+    <% } %>
+  </tbody>
+</table>
       </div>
     </div>
 
@@ -958,7 +1037,84 @@ function loadHistory() {
       document.getElementById('historyContent').innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Error loading history</p>';
     });
 }
+// Load topics for each PDF
+document.querySelectorAll('[data-pdf-id]').forEach(cell => {
+  const pdfId = cell.dataset.pdfId;
+  
+  fetch(`/api/topics/${pdfId}`)
+    .then(res => res.json())
+    .then(topics => {
+      if (topics && topics.length > 0) {
+        cell.innerHTML = topics.slice(0, 4).map(t => 
+          `<span class="topic-badge"><i class="fas fa-hashtag"></i> ${t.topic_name}</span>`
+        ).join('');
+      } else {
+        cell.innerHTML = '<span class="no-topics">No topics</span>';
+      }
+    })
+    .catch(() => {
+      cell.innerHTML = '<span class="no-topics">Failed to load</span>';
+    });
+});
 
+// Add topic filter dropdown
+const filterContainer = document.querySelector('.filter-container');
+if (filterContainer) {
+  // Create topic filter
+  const topicFilter = document.createElement('select');
+  topicFilter.id = 'topicFilter';
+  topicFilter.innerHTML = '<option value="">All Topics</option>';
+  topicFilter.disabled = true;
+  
+  // Insert after course filter
+  const courseFilter = document.getElementById('tableFilter');
+  if (courseFilter && courseFilter.parentNode) {
+    courseFilter.parentNode.insertBefore(topicFilter, courseFilter.nextSibling);
+  }
+  
+  // Load topics when course is selected
+  const tableFilter = document.getElementById('tableFilter');
+  if (tableFilter) {
+    tableFilter.addEventListener('change', function() {
+      const course = this.value;
+      
+      if (course) {
+        topicFilter.disabled = false;
+        topicFilter.innerHTML = '<option value="">Loading topics...</option>';
+        
+        fetch(`/api/course-topics/${course}`)
+          .then(res => res.json())
+          .then(topics => {
+            topicFilter.innerHTML = '<option value="">All Topics</option>' +
+              topics.map(t => `<option value="${t.topic_name}">${t.topic_name}</option>`).join('');
+          })
+          .catch(() => {
+            topicFilter.innerHTML = '<option value="">Error loading topics</option>';
+          });
+      } else {
+        topicFilter.disabled = true;
+        topicFilter.innerHTML = '<option value="">All Topics</option>';
+      }
+    });
+  }
+  
+  // Filter by topic
+  topicFilter.addEventListener('change', function() {
+    const selectedTopic = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#pdfTable tbody tr');
+    
+    rows.forEach(row => {
+      const topicCells = row.querySelectorAll('.topic-badge');
+      const topicTexts = Array.from(topicCells).map(cell => cell.textContent.toLowerCase());
+      
+      if (!selectedTopic || topicTexts.some(text => text.includes(selectedTopic))) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  });
+}
 // Handle page cache
 window.addEventListener('pageshow', function (event) {
   if (event.persisted) {
