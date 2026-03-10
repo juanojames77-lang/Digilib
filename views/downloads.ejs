@@ -191,6 +191,7 @@ header {
   height: 100%;
   border-right: 1px solid var(--border-color);
   box-shadow: 2px 0 4px rgba(0,0,0,0.02);
+  overflow-y: auto;
 }
 
 .brand {
@@ -295,7 +296,7 @@ header {
 /* Stats row */
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 20px;
   margin-bottom: 24px;
 }
@@ -309,10 +310,27 @@ header {
   align-items: center;
   gap: 16px;
   transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
 }
 
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: var(--google-blue);
+}
+
+.stat-card:nth-child(1)::before { background: var(--google-blue); }
+.stat-card:nth-child(2)::before { background: var(--google-green); }
+.stat-card:nth-child(3)::before { background: var(--google-yellow); }
+
 .stat-card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
   border-color: var(--google-blue);
 }
 
@@ -326,6 +344,7 @@ header {
   justify-content: center;
   color: var(--google-blue);
   font-size: 24px;
+  flex-shrink: 0;
 }
 
 .stat-info h3 {
@@ -333,6 +352,7 @@ header {
   font-weight: 600;
   color: var(--text-primary);
   line-height: 1.2;
+  margin-bottom: 4px;
 }
 
 .stat-info p {
@@ -346,6 +366,7 @@ header {
   border: 1px solid var(--border-color);
   overflow: hidden;
   background: white;
+  margin-top: 20px;
 }
 
 table {
@@ -382,15 +403,23 @@ td i {
   margin-right: 8px;
 }
 
+/* Date badge - FIXED for Philippines timezone */
 .date-badge {
   background: #e8f0fe;
   color: var(--google-blue);
-  padding: 6px 12px;
-  border-radius: 20px;
+  padding: 8px 16px;
+  border-radius: 30px;
   font-size: 13px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 12px;
+  transition: all 0.2s;
+}
+
+.date-badge:hover {
+  background: var(--google-blue);
+  color: white;
+  transform: scale(1.02);
 }
 
 .date-badge i {
@@ -398,6 +427,36 @@ td i {
   margin-right: 0;
 }
 
+.date-badge .date-separator {
+  color: var(--text-secondary);
+  font-size: 16px;
+  font-weight: 300;
+}
+
+.date-badge:hover .date-separator {
+  color: rgba(255,255,255,0.7);
+}
+
+/* Title link */
+.download-title {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.download-title:hover {
+  color: var(--google-blue);
+}
+
+.download-title i {
+  color: var(--google-red);
+  font-size: 16px;
+}
+
+/* Empty state */
 .empty-state {
   text-align: center;
   padding: 60px 20px;
@@ -419,6 +478,29 @@ td i {
 
 .empty-state p {
   font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.browse-btn {
+  display: inline-block;
+  background: var(--google-blue);
+  color: white;
+  padding: 12px 32px;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.browse-btn:hover {
+  background: #3b78e7;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(66,133,244,0.3);
+}
+
+.browse-btn i {
+  margin-right: 8px;
 }
 
 /* Mobile menu toggle */
@@ -538,6 +620,15 @@ td i {
   color: #8ab4f8;
 }
 
+.dark-mode .date-badge:hover {
+  background: #8ab4f8;
+  color: #202124;
+}
+
+.dark-mode .download-title:hover {
+  color: #8ab4f8;
+}
+
 .dark-mode .dropdown {
   background: #2d2e30;
   border-color: #5f6368;
@@ -597,6 +688,16 @@ td i {
 
   td, th {
     white-space: nowrap;
+  }
+
+  .date-badge {
+    flex-direction: column;
+    gap: 4px;
+    align-items: flex-start;
+  }
+
+  .date-badge .date-separator {
+    display: none;
   }
 }
 
@@ -686,7 +787,21 @@ td i {
           <i class="fas fa-clock"></i>
         </div>
         <div class="stat-info">
-          <h3><%= files.length > 0 ? new Date(Math.max(...files.map(f => new Date(f.downloaded_at)))).toLocaleDateString() : 'N/A' %></h3>
+          <h3>
+            <% if (files.length > 0) { 
+              // Get the most recent download date and format it for Philippines
+              const latestDate = new Date(Math.max(...files.map(f => new Date(f.downloaded_at))));
+              // Add 8 hours for PH timezone
+              latestDate.setHours(latestDate.getHours() + 8);
+              // Format: "Mar 10, 2026"
+              const formattedLatest = latestDate.toLocaleDateString('en-PH', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+              });
+              %><%= formattedLatest %><%
+            } else { %>N/A<% } %>
+          </h3>
           <p>Last Download</p>
         </div>
       </div>
@@ -701,8 +816,8 @@ td i {
           <i class="fas fa-download"></i>
           <h3>No downloads yet</h3>
           <p>When you download theses, they will appear here</p>
-          <a href="/" style="display: inline-block; margin-top: 16px; background: var(--google-blue); color: white; padding: 10px 24px; border-radius: 24px; font-size: 14px;">
-            <i class="fas fa-search" style="margin-right: 8px;"></i>Browse Theses
+          <a href="/" class="browse-btn">
+            <i class="fas fa-search"></i> Browse Theses
           </a>
         </div>
       <% } else { %>
@@ -711,42 +826,59 @@ td i {
             <thead>
               <tr>
                 <th><i class="fas fa-file-pdf"></i> Thesis Title</th>
-                <th><i class="fas fa-calendar"></i> Date Downloaded</th>
+                <th><i class="fas fa-calendar"></i> Date & Time Downloaded (Philippines)</th>
               </tr>
             </thead>
             <tbody>
               <% files.forEach(file => { 
+                // FIXED: Philippines Timezone (UTC+8)
                 const downloadDate = new Date(file.downloaded_at);
-                // Add 8 hours for PH timezone
+                
+                // Add 8 hours for Philippines time (UTC+8)
                 downloadDate.setHours(downloadDate.getHours() + 8);
                 
-                const formattedDate = downloadDate.toLocaleDateString('en-US', {
+                // Format date: "March 10, 2026"
+                const formattedDate = downloadDate.toLocaleDateString('en-PH', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric'
                 });
                 
-                const formattedTime = downloadDate.toLocaleTimeString('en-US', {
+                // Format time: "2:30 PM"
+                const formattedTime = downloadDate.toLocaleTimeString('en-PH', {
                   hour: '2-digit',
                   minute: '2-digit',
                   hour12: true
                 });
+                
+                // Get day of week: "Monday"
+                const dayOfWeek = downloadDate.toLocaleDateString('en-PH', {
+                  weekday: 'long'
+                });
               %>
               <tr>
                 <td>
-                  <i class="fas fa-file-pdf" style="color: var(--google-red);"></i>
-                  <%= file.title %>
+                  <a href="/view/<%= file.id %>" class="download-title">
+                    <i class="fas fa-file-pdf"></i>
+                    <%= file.title %>
+                  </a>
                 </td>
                 <td>
                   <span class="date-badge">
-                    <i class="fas fa-calendar-alt"></i> <%= formattedDate %>
-                    <i class="fas fa-clock" style="margin-left: 8px;"></i> <%= formattedTime %>
+                    <i class="fas fa-calendar-alt"></i> <%= dayOfWeek %>, <%= formattedDate %>
+                    <span class="date-separator">|</span>
+                    <i class="fas fa-clock"></i> <%= formattedTime %> PHT
                   </span>
                 </td>
               </tr>
               <% }) %>
             </tbody>
           </table>
+        </div>
+        
+        <!-- Download summary -->
+        <div style="margin-top: 16px; font-size: 13px; color: var(--text-secondary); text-align: right;">
+          <i class="fas fa-info-circle"></i> All times are in Philippines Time (UTC+8)
         </div>
       <% } %>
     </div>
@@ -815,6 +947,9 @@ window.addEventListener('pageshow', function (event) {
     window.location.reload();
   }
 });
+
+// Optional: Add a small note to show this page was updated
+console.log('📥 Downloads page loaded with Philippines timezone (UTC+8)');
 </script>
 
 </body>
