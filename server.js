@@ -275,8 +275,8 @@ app.get('/api/popular-topics', async (req, res) => {
   }
 });
 
-/*
- * Search theses by topic
+/**
+ * Search theses by topic - FIXED VERSION
  */
 app.get('/search-by-topic', requireLogin, async (req, res) => {
   try {
@@ -286,18 +286,35 @@ app.get('/search-by-topic', requireLogin, async (req, res) => {
       return res.redirect('/');
     }
     
+    console.log(`🔍 Searching for topic: "${topic}" in course: ${course || 'all'}`);
+    
+    // FIXED: Better query that actually finds topics
     const result = await pool.query(
-      `SELECT p.*, 
-              array_agg(t.topic_name) as topic_list
+      `SELECT DISTINCT p.*, 
+              array_agg(DISTINCT t.topic_name) FILTER (WHERE t.topic_name IS NOT NULL) as topic_list
        FROM pdfs p
        LEFT JOIN thesis_topics t ON p.id = t.pdf_id
-       WHERE (t.topic_name ILIKE $1 OR p.title ILIKE $1)
+       WHERE p.is_private = false
+         AND (
+           t.topic_name ILIKE $1 
+           OR p.title ILIKE $1
+           OR EXISTS (
+             SELECT 1 FROM thesis_topics t2 
+             WHERE t2.pdf_id = p.id AND t2.topic_name ILIKE $1
+           )
+         )
          AND ($2 = '' OR p.cluster = $2::int)
-         AND p.is_private = false
        GROUP BY p.id
-       ORDER BY p.id DESC`,
+       ORDER BY 
+         CASE 
+           WHEN p.title ILIKE $1 THEN 1  -- Title matches first
+           ELSE 2                          -- Topic matches second
+         END,
+         p.id DESC`,
       [`%${topic}%`, course || '']
     );
+    
+    console.log(`✅ Found ${result.rows.length} results for topic: "${topic}"`);
     
     const clusters = ['BSCS', 'BSED-MATH', 'BSES', 'BSHM', 'BTLED-HE', 'BEED'];
     
@@ -311,14 +328,14 @@ app.get('/search-by-topic', requireLogin, async (req, res) => {
     res.render('topic-results', {
       results: results,
       query: topic,
-      course: course,
+      course: course || '',
       clusters: clusters,
       username: req.session.user
     });
     
   } catch (err) {
-    console.error('Error searching by topic:', err);
-    res.status(500).send('Search failed');
+    console.error('❌ Error searching by topic:', err);
+    res.status(500).send('Search failed: ' + err.message);
   }
 });
 
@@ -617,14 +634,65 @@ app.post('/update-course/:id', requireLogin, isAdmin, async (req, res) => {
 });
 
 /* ================= USER SEARCH ================= */
-app.get('/search', requireLogin, async (req,res)=>{
-  const result = await pool.query('SELECT * FROM pdfs WHERE title ILIKE $1',['%'+req.query.q+'%']);
-  const pdfs = result.rows.filter(p=> !p.is_private);
-
-  // ==== LOG SEARCH HISTORY ====
-  await pool.query('INSERT INTO search_history(username, query) VALUES($1,$2)', [req.session.user, req.query.q]);
-
-  res.render('results',{ results: pdfs, query:req.query.q });
+a/* ================= ENHANCED USER SEARCH (Title + Topics) ================= */
+app.get('/search', requireLogin, async (req, res) => {
+  try {
+    const searchQuery = req.query.q;
+    
+    if (!searchQuery) {
+      return res.redirect('/');
+    }
+    
+    console.log(`🔍 Searching for: "${searchQuery}"`);
+    
+    // Enhanced query that searches both title AND topics
+    const result = await pool.query(
+      `SELECT DISTINCT p.*, 
+              array_agg(DISTINCT t.topic_name) FILTER (WHERE t.topic_name IS NOT NULL) as topic_list
+       FROM pdfs p
+       LEFT JOIN thesis_topics t ON p.id = t.pdf_id
+       WHERE p.is_private = false
+         AND (
+           p.title ILIKE $1 
+           OR t.topic_name ILIKE $1
+           OR EXISTS (
+             SELECT 1 FROM thesis_topics t2 
+             WHERE t2.pdf_id = p.id AND t2.topic_name ILIKE $1
+           )
+         )
+       GROUP BY p.id
+       ORDER BY 
+         CASE 
+           WHEN p.title ILIKE $1 THEN 1  -- Title matches first
+           ELSE 2                          -- Topic matches second
+         END,
+         p.id DESC`,
+      [`%${searchQuery}%`]
+    );
+    
+    console.log(`✅ Found ${result.rows.length} results for: "${searchQuery}"`);
+    
+    // Format results with topics array
+    const pdfs = result.rows.map(row => ({
+      ...row,
+      topics: row.topic_list || []
+    }));
+    
+    // ==== LOG SEARCH HISTORY ====
+    await pool.query(
+      'INSERT INTO search_history(username, query) VALUES($1, $2)', 
+      [req.session.user, searchQuery]
+    );
+    
+    res.render('results', { 
+      results: pdfs, 
+      query: searchQuery 
+    });
+    
+  } catch (err) {
+    console.error('❌ Search error:', err);
+    res.status(500).send('Search failed');
+  }
 });
 //REQUEST USER DOWNLOAD
 app.post('/request-download/:id', requireLogin, async (req,res)=>{
