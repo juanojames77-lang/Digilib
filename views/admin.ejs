@@ -24,6 +24,14 @@
   --text-secondary: #5f6368;
   --border-color: #dadce0;
   --hover-bg: #f1f3f4;
+  
+  /* Action button colors */
+  --view-color: #4285f4;
+  --view-hover: #1a5bbf;
+  --edit-color: #fbbc05;
+  --edit-hover: #e3a008;
+  --delete-color: #ea4335;
+  --delete-hover: #c5221f;
 }
 
 /* ========== BASE ========== */
@@ -210,6 +218,7 @@ header {
   height: 100%;
   border-right: 1px solid var(--border-color);
   box-shadow: 2px 0 4px rgba(0,0,0,0.02);
+  overflow-y: auto;
 }
 
 .brand {
@@ -493,13 +502,30 @@ header {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Filter container */
+/* Enhanced Filter container */
 .filter-container {
   display: flex;
   align-items: center;
   gap: 16px;
   margin-bottom: 20px;
   flex-wrap: wrap;
+  background: white;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-group label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 .filter-container select {
@@ -510,7 +536,7 @@ header {
   font-size: 14px;
   background: white;
   cursor: pointer;
-  min-width: 200px;
+  min-width: 180px;
   color: var(--text-primary);
 }
 
@@ -519,12 +545,72 @@ header {
   box-shadow: 0 1px 6px rgba(66,133,244,0.2);
 }
 
-/* Table styling - Google style */
+.sort-buttons {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.sort-btn {
+  background: white;
+  border: 1px solid var(--border-color);
+  padding: 8px 16px;
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.sort-btn:hover {
+  background: var(--hover-bg);
+  color: var(--google-blue);
+  border-color: var(--google-blue);
+}
+
+.sort-btn.active {
+  background: var(--google-blue);
+  color: white;
+  border-color: var(--google-blue);
+}
+
+.sort-btn i {
+  font-size: 12px;
+}
+
+.reset-btn {
+  background: white;
+  border: 1px solid var(--border-color);
+  padding: 8px 20px;
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+
+.reset-btn:hover {
+  background: var(--hover-bg);
+  color: var(--google-red);
+  border-color: var(--google-red);
+}
+
+/* Table styling */
 .table-wrapper {
   border-radius: 12px;
   border: 1px solid var(--border-color);
   overflow: hidden;
   background: white;
+  max-height: 600px;
+  overflow-y: auto;
 }
 
 table {
@@ -535,11 +621,26 @@ table {
 thead th {
   background: #f8f9fa;
   color: var(--text-secondary);
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 13px;
   padding: 16px;
   text-align: left;
   border-bottom: 2px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+thead th:hover {
+  background: #e8eaed;
+}
+
+thead th i {
+  margin-left: 6px;
+  font-size: 12px;
+  opacity: 0.5;
 }
 
 tbody tr {
@@ -555,11 +656,43 @@ td {
   padding: 16px;
   color: var(--text-primary);
   font-size: 14px;
+  vertical-align: top;
+}
+
+/* Title cell with icon */
+.title-cell {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-weight: 500;
+  max-width: 300px;
+}
+
+.title-cell i {
+  color: var(--google-red);
+  font-size: 18px;
+  margin-top: 2px;
+}
+
+.title-text {
+  word-break: break-word;
+}
+
+/* Course badge */
+.course-badge {
+  background: #e8f0fe;
+  color: var(--google-blue);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+  white-space: nowrap;
 }
 
 /* Status badges */
 .status-badge {
-  padding: 4px 12px;
+  padding: 6px 12px;
   border-radius: 20px;
   font-size: 12px;
   font-weight: 500;
@@ -576,38 +709,120 @@ td {
   color: #a50e0e;
 }
 
-/* Action buttons */
-.action-btn {
-  background: white;
+/* Topics container */
+.topics-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 250px;
+}
+
+.topic-badge {
+  background: #e8f0fe;
   color: var(--google-blue);
-  border: 1px solid var(--border-color);
-  padding: 6px 12px;
-  border-radius: 20px;
+  padding: 4px 8px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.topic-badge i {
+  font-size: 9px;
+}
+
+.topic-placeholder {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Uploader info */
+.uploader-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.uploader-info i {
+  color: var(--google-blue);
+  font-size: 14px;
+}
+
+/* Action buttons - COLOR CODED */
+.actions-container {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  border: none;
+  padding: 8px 14px;
+  border-radius: 24px;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  margin: 0 4px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .action-btn i {
   font-size: 12px;
 }
 
-.action-btn:hover {
-  background: var(--google-blue);
+/* View button - Blue */
+.action-btn.view {
+  background: #e8f0fe;
+  color: var(--view-color);
+  border: 1px solid transparent;
+}
+
+.action-btn.view:hover {
+  background: var(--view-color);
   color: white;
-  border-color: var(--google-blue);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(66,133,244,0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(66,133,244,0.3);
+}
+
+/* Edit button - Yellow */
+.action-btn.edit {
+  background: #fef7e0;
+  color: #b06000;
+  border: 1px solid transparent;
+}
+
+.action-btn.edit:hover {
+  background: var(--edit-color);
+  color: #202124;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(251,188,5,0.3);
+}
+
+.action-btn.edit:hover i {
+  color: #202124;
+}
+
+/* Delete button - Red */
+.action-btn.delete {
+  background: #fce8e6;
+  color: var(--delete-color);
+  border: 1px solid transparent;
 }
 
 .action-btn.delete:hover {
-  background: var(--google-red);
-  border-color: var(--google-red);
+  background: var(--delete-color);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(234,67,53,0.3);
 }
 
 /* Edit Modal */
@@ -689,12 +904,15 @@ td {
   background: var(--hover-bg);
 }
 
-/* Upload preview overlay */
-.upload-preview {
-  margin-top: 20px;
-  padding: 16px;
-  background: var(--hover-bg);
-  border-radius: 8px;
+/* Loading indicator for topics */
+.loading-topics {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--google-blue);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
 }
 
 /* ========== DARK MODE ========== */
@@ -743,7 +961,8 @@ td {
 
 .dark-mode input, 
 .dark-mode select,
-.dark-mode .file-input-wrapper input[type=file] {
+.dark-mode .file-input-wrapper input[type=file],
+.dark-mode .filter-container {
   background: #3c4043;
   border-color: #5f6368;
   color: #e8eaed;
@@ -763,6 +982,10 @@ td {
   background: #3c4043;
   color: #bdc1c6;
   border-bottom-color: #5f6368;
+}
+
+.dark-mode thead th:hover {
+  background: #4a4d51;
 }
 
 .dark-mode tbody tr {
@@ -801,13 +1024,58 @@ td {
   border-color: #5f6368;
 }
 
-.dark-mode .topic-tag {
+.dark-mode .topic-tag,
+.dark-mode .topic-badge {
   background: #394457;
   color: #8ab4f8;
 }
 
-.dark-mode .topic-tag i {
+.dark-mode .action-btn.view {
+  background: #394457;
   color: #8ab4f8;
+}
+
+.dark-mode .action-btn.view:hover {
+  background: #4285f4;
+  color: white;
+}
+
+.dark-mode .action-btn.edit {
+  background: #4a3d2a;
+  color: #fbbc05;
+}
+
+.dark-mode .action-btn.edit:hover {
+  background: #fbbc05;
+  color: #202124;
+}
+
+.dark-mode .action-btn.delete {
+  background: #4a2a2a;
+  color: #f28b82;
+}
+
+.dark-mode .action-btn.delete:hover {
+  background: #ea4335;
+  color: white;
+}
+
+.dark-mode .sort-btn,
+.dark-mode .reset-btn {
+  background: #3c4043;
+  border-color: #5f6368;
+  color: #bdc1c6;
+}
+
+.dark-mode .sort-btn:hover,
+.dark-mode .reset-btn:hover {
+  background: #4a4d51;
+}
+
+.dark-mode .sort-btn.active {
+  background: #4285f4;
+  color: white;
+  border-color: #4285f4;
 }
 
 /* ========== MOBILE RESPONSIVE ========== */
@@ -861,34 +1129,26 @@ td {
     width: 100%;
   }
 
-  table {
-    display: block;
-    overflow-x: auto;
+  .sort-buttons {
+    margin-left: 0;
+    justify-content: space-between;
   }
 
-  td, th {
-    white-space: nowrap;
+  .actions-container {
+    flex-direction: column;
+  }
+
+  .action-btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .menu-toggle {
     display: block !important;
   }
 
-  .action-btn {
-    padding: 4px 8px;
-    font-size: 11px;
-  }
-}
-
-/* Tablet adjustments */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .sidebar {
-    width: 220px;
-  }
-
-  .content {
-    margin-left: 220px;
-    padding: 24px;
+  td {
+    min-width: 120px;
   }
 }
 
@@ -1094,7 +1354,7 @@ td {
       
       <div class="spinner" id="spinner"></div>
       
-      <!-- Topics Preview Area (NEW) -->
+      <!-- Topics Preview Area -->
       <div class="topics-preview" id="topicsPreview" style="display: none;">
         <h3><i class="fas fa-tags"></i> Extracted Topics:</h3>
         <div class="topic-tags" id="topicTags"></div>
@@ -1104,48 +1364,94 @@ td {
 
       <h2 style="margin-top: 32px;"><i class="fas fa-list"></i> All PDFs</h2>
       
+      <!-- Enhanced Filter & Sort Section -->
       <div class="filter-container">
-        <select id="courseFilter">
-          <option value="all">All Courses</option>
-          <% clusters.forEach((c,i)=>{ %>
-            <option value="<%= i %>"><%= c %></option>
-          <% }) %>
-        </select>
-        <span style="color: var(--text-secondary); font-size: 14px;">
-          <i class="fas fa-file"></i> <%= pdfs.length %> total
-        </span>
+        <div class="filter-group">
+          <label><i class="fas fa-filter"></i> Course:</label>
+          <select id="courseFilter">
+            <option value="all">All Courses</option>
+            <% clusters.forEach((c,i)=>{ %>
+              <option value="<%= i %>"><%= c %></option>
+            <% }) %>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label><i class="fas fa-tag"></i> Status:</label>
+          <select id="statusFilter">
+            <option value="all">All</option>
+            <option value="public">Public Only</option>
+            <option value="private">Private Only</option>
+          </select>
+        </div>
+        
+        <div class="filter-group">
+          <label><i class="fas fa-user"></i> Uploader:</label>
+          <input type="text" id="uploaderFilter" placeholder="Filter by uploader..." style="padding: 8px 12px; border-radius: 24px; border: 1px solid var(--border-color);">
+        </div>
+        
+        <div class="sort-buttons">
+          <button class="sort-btn active" id="sortDateDesc" title="Newest first">
+            <i class="fas fa-sort-amount-down"></i> Date
+          </button>
+          <button class="sort-btn" id="sortTitleAsc" title="Title A-Z">
+            <i class="fas fa-sort-alpha-down"></i> Title
+          </button>
+          <button class="reset-btn" id="resetFilters">
+            <i class="fas fa-undo-alt"></i> Reset
+          </button>
+        </div>
       </div>
 
       <div class="table-wrapper">
         <table id="pdfTable">
           <thead>
             <tr>
-              <th>Title</th>
-              <th>Course</th>
-              <th>Status</th>
-              <th>Uploader</th>
+              <th onclick="sortTable(0)">Title <i class="fas fa-sort" id="sortIcon0"></i></th>
+              <th onclick="sortTable(1)">Course <i class="fas fa-sort" id="sortIcon1"></i></th>
+              <th>Topics</th>
+              <th onclick="sortTable(3)">Status <i class="fas fa-sort" id="sortIcon3"></i></th>
+              <th onclick="sortTable(4)">Uploader <i class="fas fa-sort" id="sortIcon4"></i></th>
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody id="tableBody">
             <% pdfs.forEach(pdf => { %>
-            <tr data-id="<%= pdf.id %>" data-cluster="<%= pdf.cluster %>">
-              <td><i class="fas fa-file-pdf" style="color: var(--google-red); margin-right: 8px;"></i> <%= pdf.title %></td>
-              <td><span class="course-badge" style="background:#e8f0fe; color:var(--google-blue); padding:4px 12px; border-radius:16px;"><%= clusters[pdf.cluster] || 'Unknown' %></span></td>
+            <tr data-id="<%= pdf.id %>" data-cluster="<%= pdf.cluster %>" data-status="<%= pdf.is_private ? 'private' : 'public' %>" data-uploader="<%= pdf.uploader %>" data-title="<%= pdf.title.toLowerCase() %>">
+              <td>
+                <div class="title-cell">
+                  <i class="fas fa-file-pdf"></i>
+                  <span class="title-text"><%= pdf.title %></span>
+                </div>
+              </td>
+              <td><span class="course-badge"><%= clusters[pdf.cluster] || 'Unknown' %></span></td>
+              <td>
+                <div class="topics-container" data-pdf-id="<%= pdf.id %>">
+                  <span class="topic-placeholder"><i class="fas fa-spinner fa-spin"></i> Loading...</span>
+                </div>
+              </td>
               <td>
                 <span class="status-badge <%= pdf.is_private ? 'status-private' : 'status-public' %>">
+                  <i class="fas <%= pdf.is_private ? 'fa-lock' : 'fa-globe' %>"></i>
                   <%= pdf.is_private ? 'Private' : 'Public' %>
                 </span>
               </td>
-              <td><i class="fas fa-user-circle" style="color:var(--text-secondary); margin-right:4px;"></i> <%= pdf.uploader %></td>
               <td>
-                <a href="/view-admin/<%= pdf.id %>">
-                  <button class="action-btn"><i class="fas fa-eye"></i> View</button>
-                </a>
-                <button class="action-btn editBtn"><i class="fas fa-edit"></i> Edit</button>
-                <form action="/delete/<%= pdf.id %>" method="POST" style="display:inline;">
-                  <button type="submit" class="action-btn delete" onclick="return confirm('Are you sure you want to delete this thesis?')"><i class="fas fa-trash"></i> Delete</button>
-                </form>
+                <div class="uploader-info">
+                  <i class="fas fa-user-circle"></i>
+                  <%= pdf.uploader %>
+                </div>
+              </td>
+              <td>
+                <div class="actions-container">
+                  <a href="/view-admin/<%= pdf.id %>">
+                    <button class="action-btn view"><i class="fas fa-eye"></i> View</button>
+                  </a>
+                  <button class="action-btn edit editBtn"><i class="fas fa-edit"></i> Edit</button>
+                  <form action="/delete/<%= pdf.id %>" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this thesis?')">
+                    <button type="submit" class="action-btn delete"><i class="fas fa-trash"></i> Delete</button>
+                  </form>
+                </div>
               </td>
             </tr>
             <% }) %>
@@ -1235,14 +1541,33 @@ document.querySelectorAll('.nav a').forEach(link => {
   }
 });
 
-// UPLOAD FORM - UPDATED with course validation and topics preview
+// Load topics for each PDF
+document.querySelectorAll('.topics-container').forEach(container => {
+  const pdfId = container.dataset.pdfId;
+  
+  fetch(`/api/topics/${pdfId}`)
+    .then(res => res.json())
+    .then(topics => {
+      if (topics && topics.length > 0) {
+        container.innerHTML = topics.slice(0, 5).map(t => 
+          `<span class="topic-badge"><i class="fas fa-hashtag"></i> ${t.topic_name}</span>`
+        ).join('');
+      } else {
+        container.innerHTML = '<span class="topic-placeholder">No topics</span>';
+      }
+    })
+    .catch(() => {
+      container.innerHTML = '<span class="topic-placeholder">Failed to load</span>';
+    });
+});
+
+// UPLOAD FORM
 document.getElementById('uploadForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   
   const fileInput = e.target.pdf;
   const courseSelect = document.getElementById('courseSelect');
   
-  // Validate course selection
   if (!courseSelect.value) {
     alert('Please select a course');
     courseSelect.focus();
@@ -1256,8 +1581,6 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
 
   const data = new FormData(e.target);
   spinner.style.display = 'block';
-  
-  // Hide previous preview
   document.getElementById('topicsPreview').style.display = 'none';
   
   try {
@@ -1266,7 +1589,6 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
     spinner.style.display = 'none';
 
     if (json.success) {
-      // Show topics preview if available
       const topicsPreview = document.getElementById('topicsPreview');
       const topicTags = document.getElementById('topicTags');
       
@@ -1277,7 +1599,6 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
         topicsPreview.style.display = 'block';
       }
       
-      // Show success overlay with topics
       const overlay = document.createElement('div');
       overlay.style.position = 'fixed';
       overlay.style.top = '0';
@@ -1309,7 +1630,6 @@ document.getElementById('uploadForm').addEventListener('submit', async (e) => {
       document.body.appendChild(overlay);
       setTimeout(() => location.reload(), 3000);
     } else {
-      // Show error overlay
       const overlay = document.createElement('div');
       overlay.style.position = 'fixed';
       overlay.style.top = '0';
@@ -1377,22 +1697,133 @@ document.getElementById('editForm').addEventListener('submit', async e => {
   }
 });
 
-// COURSE FILTER
-const courseFilter = document.getElementById('courseFilter');
-courseFilter.addEventListener('change', () => {
-  const selected = courseFilter.value;
-  const rows = document.querySelectorAll('#pdfTable tbody tr');
+// ========== ENHANCED FILTERING AND SORTING ==========
 
-  rows.forEach(row => {
-    if (selected === 'all') {
-      row.style.display = '';
-    } else if (row.dataset.cluster === selected) {
-      row.style.display = '';
-    } else {
-      row.style.display = 'none';
+// Get all rows
+const rows = document.querySelectorAll('#tableBody tr');
+let currentSort = { column: 3, direction: 'desc' }; // Default sort by date (newest first)
+
+// Sorting function
+function sortTable(columnIndex) {
+  const tbody = document.getElementById('tableBody');
+  const rowsArray = Array.from(rows);
+  
+  // Update sort icons
+  for (let i = 0; i < 5; i++) {
+    const icon = document.getElementById(`sortIcon${i}`);
+    if (icon) {
+      icon.className = 'fas fa-sort';
     }
+  }
+  
+  const currentIcon = document.getElementById(`sortIcon${columnIndex}`);
+  
+  // Determine sort direction
+  if (currentSort.column === columnIndex) {
+    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+  } else {
+    currentSort.column = columnIndex;
+    currentSort.direction = 'asc';
+  }
+  
+  // Update icon
+  if (currentSort.direction === 'asc') {
+    currentIcon.className = 'fas fa-sort-up';
+  } else {
+    currentIcon.className = 'fas fa-sort-down';
+  }
+  
+  // Sort rows
+  rowsArray.sort((a, b) => {
+    let aVal, bVal;
+    
+    switch(columnIndex) {
+      case 0: // Title
+        aVal = a.querySelector('.title-text').textContent.toLowerCase();
+        bVal = b.querySelector('.title-text').textContent.toLowerCase();
+        break;
+      case 1: // Course
+        aVal = a.querySelector('.course-badge').textContent;
+        bVal = b.querySelector('.course-badge').textContent;
+        break;
+      case 3: // Status
+        aVal = a.querySelector('.status-badge').textContent.trim();
+        bVal = b.querySelector('.status-badge').textContent.trim();
+        break;
+      case 4: // Uploader
+        aVal = a.querySelector('.uploader-info').textContent.trim();
+        bVal = b.querySelector('.uploader-info').textContent.trim();
+        break;
+      default:
+        return 0;
+    }
+    
+    if (aVal < bVal) return currentSort.direction === 'asc' ? -1 : 1;
+    if (aVal > bVal) return currentSort.direction === 'asc' ? 1 : -1;
+    return 0;
   });
-});
+  
+  // Reorder rows
+  rowsArray.forEach(row => tbody.appendChild(row));
+  applyFilters(); // Re-apply filters after sorting
+}
+
+// Filter function
+function applyFilters() {
+  const courseFilter = document.getElementById('courseFilter').value;
+  const statusFilter = document.getElementById('statusFilter').value;
+  const uploaderFilter = document.getElementById('uploaderFilter').value.toLowerCase();
+  
+  rows.forEach(row => {
+    let show = true;
+    
+    // Course filter
+    if (courseFilter !== 'all' && row.dataset.cluster !== courseFilter) {
+      show = false;
+    }
+    
+    // Status filter
+    if (statusFilter !== 'all') {
+      const isPrivate = row.dataset.status === 'private';
+      if ((statusFilter === 'public' && isPrivate) || (statusFilter === 'private' && !isPrivate)) {
+        show = false;
+      }
+    }
+    
+    // Uploader filter
+    if (uploaderFilter && !row.dataset.uploader.toLowerCase().includes(uploaderFilter)) {
+      show = false;
+    }
+    
+    row.style.display = show ? '' : 'none';
+  });
+}
+
+// Reset filters
+function resetFilters() {
+  document.getElementById('courseFilter').value = 'all';
+  document.getElementById('statusFilter').value = 'all';
+  document.getElementById('uploaderFilter').value = '';
+  
+  // Reset sorting to default (newest first by ID)
+  currentSort = { column: 0, direction: 'desc' };
+  sortTable(0);
+  
+  rows.forEach(row => row.style.display = '');
+}
+
+// Event listeners
+document.getElementById('courseFilter').addEventListener('change', applyFilters);
+document.getElementById('statusFilter').addEventListener('change', applyFilters);
+document.getElementById('uploaderFilter').addEventListener('input', applyFilters);
+document.getElementById('resetFilters').addEventListener('click', resetFilters);
+
+// Sort buttons
+document.getElementById('sortDateDesc').addEventListener('click', () => sortTable(3));
+document.getElementById('sortTitleAsc').addEventListener('click', () => sortTable(0));
+
+// Initial sort by date
+sortTable(3);
 
 // Handle page cache
 window.addEventListener('pageshow', function (event) {
