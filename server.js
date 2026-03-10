@@ -634,7 +634,7 @@ app.post('/update-course/:id', requireLogin, isAdmin, async (req, res) => {
 });
 
 /* ================= USER SEARCH ================= */
-/* ================= FIXED SEARCH ROUTE (Title + Topics) ================= */
+/* ================= FIXED SEARCH ROUTE ================= */
 app.get('/search', requireLogin, async (req, res) => {
   try {
     const searchQuery = req.query.q;
@@ -645,9 +645,9 @@ app.get('/search', requireLogin, async (req, res) => {
     
     console.log(`🔍 Searching for: "${searchQuery}"`);
     
-    // SIMPLE AND WORKING QUERY
+    // FIXED: Added p.title to SELECT to use in ORDER BY
     const result = await pool.query(
-      `SELECT DISTINCT p.*
+      `SELECT DISTINCT p.*, p.title as sort_title
        FROM pdfs p
        LEFT JOIN thesis_topics t ON p.id = t.pdf_id
        WHERE p.is_private = false
