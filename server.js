@@ -634,7 +634,7 @@ app.post('/update-course/:id', requireLogin, isAdmin, async (req, res) => {
 });
 
 /* ================= USER SEARCH ================= */
-/* ================= FIXED SEARCH ROUTE ================= */
+/* ================= OPTIMIZED SEARCH ROUTE ================= */
 app.get('/search', requireLogin, async (req, res) => {
   try {
     const searchQuery = req.query.q;
@@ -645,13 +645,31 @@ app.get('/search', requireLogin, async (req, res) => {
     
     console.log(`🔍 Searching for: "${searchQuery}"`);
     
-    // FIXED: Added p.title to SELECT to use in ORDER BY
+    // Single query that gets all data
     const result = await pool.query(
-      `SELECT DISTINCT p.*, p.title as sort_title
+      `SELECT 
+        p.id,
+        p.title,
+        p.cluster,
+        p.is_private,
+        p.uploader,
+        p.uploaded_at,
+        p.url,
+        COALESCE(
+          (SELECT array_agg(topic_name) 
+           FROM thesis_topics t 
+           WHERE t.pdf_id = p.id),
+          ARRAY[]::varchar[]
+        ) as topics
        FROM pdfs p
-       LEFT JOIN thesis_topics t ON p.id = t.pdf_id
        WHERE p.is_private = false
-         AND (p.title ILIKE $1 OR t.topic_name ILIKE $1)
+         AND (
+           p.title ILIKE $1 
+           OR EXISTS (
+             SELECT 1 FROM thesis_topics t 
+             WHERE t.pdf_id = p.id AND t.topic_name ILIKE $1
+           )
+         )
        ORDER BY 
          CASE 
            WHEN p.title ILIKE $1 THEN 1
@@ -663,30 +681,6 @@ app.get('/search', requireLogin, async (req, res) => {
     
     console.log(`✅ Found ${result.rows.length} results for: "${searchQuery}"`);
     
-    // Now get topics for each result
-    const pdfs = [];
-    
-    for (const row of result.rows) {
-      // Get topics for this PDF
-      const topicsResult = await pool.query(
-        `SELECT topic_name FROM thesis_topics WHERE pdf_id = $1 ORDER BY topic_weight DESC`,
-        [row.id]
-      );
-      
-      const topics = topicsResult.rows.map(t => t.topic_name);
-      
-      pdfs.push({
-        id: row.id,
-        title: row.title,
-        cluster: row.cluster,
-        is_private: row.is_private,
-        uploader: row.uploader,
-        uploaded_at: row.uploaded_at,
-        url: row.url,
-        topics: topics
-      });
-    }
-    
     // Log search history
     await pool.query(
       'INSERT INTO search_history(username, query) VALUES($1, $2)', 
@@ -694,13 +688,14 @@ app.get('/search', requireLogin, async (req, res) => {
     );
     
     res.render('results', { 
-      results: pdfs, 
+      results: result.rows, 
       query: searchQuery 
     });
     
   } catch (err) {
     console.error('❌ Search error:', err);
     console.error('Error details:', err.message);
+    console.error('Stack trace:', err.stack);
     res.status(500).send('Search failed: ' + err.message);
   }
 });
