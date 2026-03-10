@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
 <meta http-equiv="Cache-Control" content="no-store" />
-<title>DIGILIB | User Dashboard</title>
+<title>DIGILIB | Dashboard</title>
 
 <!-- Font Awesome for Icons -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -43,7 +43,7 @@ body {
 
 a {
   text-decoration: none;
-  color: var(--google-blue);
+  color: inherit;
 }
 
 /* ========== COLORFUL DIGILIB HEADER ========== */
@@ -69,50 +69,20 @@ header {
   letter-spacing: -0.5px;
 }
 
-.logo span:nth-child(1) { 
-  color: var(--google-blue); 
-  font-weight: 700;
-  text-shadow: 0 2px 4px rgba(66,133,244,0.2);
-}
-.logo span:nth-child(2) { 
-  color: var(--google-red); 
-  font-weight: 700;
-  text-shadow: 0 2px 4px rgba(234,67,53,0.2);
-}
-.logo span:nth-child(3) { 
-  color: var(--google-yellow); 
-  font-weight: 700;
-  text-shadow: 0 2px 4px rgba(251,188,5,0.2);
-}
-.logo span:nth-child(4) { 
-  color: var(--google-blue); 
-  font-weight: 700;
-  text-shadow: 0 2px 4px rgba(66,133,244,0.2);
-}
-.logo span:nth-child(5) { 
-  color: var(--google-green); 
-  font-weight: 700;
-  text-shadow: 0 2px 4px rgba(52,168,83,0.2);
-}
-.logo span:nth-child(6) { 
-  color: var(--google-red); 
-  font-weight: 700;
-  text-shadow: 0 2px 4px rgba(234,67,53,0.2);
-}
-.logo span:nth-child(7) { 
-  color: var(--google-yellow); 
-  font-weight: 700;
-  text-shadow: 0 2px 4px rgba(251,188,5,0.2);
-}
+.logo span:nth-child(1) { color: var(--google-blue); font-weight: 700; }
+.logo span:nth-child(2) { color: var(--google-red); font-weight: 700; }
+.logo span:nth-child(3) { color: var(--google-yellow); font-weight: 700; }
+.logo span:nth-child(4) { color: var(--google-blue); font-weight: 700; }
+.logo span:nth-child(5) { color: var(--google-green); font-weight: 700; }
+.logo span:nth-child(6) { color: var(--google-red); font-weight: 700; }
+.logo span:nth-child(7) { color: var(--google-yellow); font-weight: 700; }
 
-/* Header right section */
 .header-right {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
-/* Profile bubble - Google style */
 .profile-bubble {
   background: var(--google-blue);
   color: white;
@@ -136,7 +106,6 @@ header {
   box-shadow: 0 4px 12px rgba(66,133,244,0.3);
 }
 
-/* Dropdown menu - Google style */
 .dropdown {
   display: none;
   position: absolute;
@@ -150,82 +119,7 @@ header {
   z-index: 1000;
   border: 1px solid var(--border-color);
 }
-/* Topic badges */
-.topic-badge {
-  background: #e8f0fe;
-  color: var(--google-blue);
-  padding: 2px 8px;
-  border-radius: 16px;
-  font-size: 11px;
-  margin: 2px;
-  display: inline-block;
-  white-space: nowrap;
-  transition: all 0.2s;
-}
 
-.topic-badge:hover {
-  background: var(--google-blue);
-  color: white;
-  transform: scale(1.05);
-}
-
-.topics-cell {
-  max-width: 200px;
-  line-height: 1.8;
-}
-
-.topic-placeholder {
-  color: #999;
-  font-size: 12px;
-  font-style: italic;
-}
-
-.no-topics {
-  color: #999;
-  font-size: 12px;
-}
-
-/* Topic filter dropdown */
-#topicFilter {
-  padding: 10px 16px;
-  border-radius: 24px;
-  border: 1px solid var(--border-color);
-  outline: none;
-  font-size: 14px;
-  background: white;
-  cursor: pointer;
-  min-width: 200px;
-  color: var(--text-primary);
-  margin-left: 10px;
-}
-
-#topicFilter:focus {
-  border-color: var(--google-blue);
-  box-shadow: 0 1px 6px rgba(66,133,244,0.2);
-}
-
-#topicFilter:disabled {
-  background: var(--hover-bg);
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-/* Dark mode for topic filter */
-.dark-mode #topicFilter {
-  background: #3c4043;
-  border-color: #5f6368;
-  color: #e8eaed;
-}
-
-.dark-mode .topic-badge {
-  background: #394457;
-  color: #8ab4f8;
-}
-
-.dark-mode .topic-badge:hover {
-  background: #8ab4f8;
-  color: #202124;
-}
 .dropdown a, .dropdown label {
   padding: 12px 16px;
   display: flex;
@@ -242,15 +136,8 @@ header {
   color: var(--google-blue);
 }
 
-.dropdown a:hover {
-  background: var(--hover-bg);
-}
-
-/* Dark mode toggle styling */
-.dropdown label {
-  border-top: 1px solid var(--border-color);
-  margin-top: 4px;
-}
+.dropdown a:hover { background: var(--hover-bg); }
+.dropdown label { border-top: 1px solid var(--border-color); }
 
 /* ========== LAYOUT ========== */
 .wrapper {
@@ -258,7 +145,7 @@ header {
   min-height: calc(100vh - 57px);
 }
 
-/* ========== SIDEBAR - WITH LOGO RESTORED ========== */
+/* ========== SIDEBAR ========== */
 .sidebar {
   width: 260px;
   background: white;
@@ -267,9 +154,9 @@ header {
   height: 100%;
   border-right: 1px solid var(--border-color);
   box-shadow: 2px 0 4px rgba(0,0,0,0.02);
+  overflow-y: auto;
 }
 
-/* RESTORED: Brand section with logo */
 .brand {
   text-align: center;
   margin-bottom: 30px;
@@ -294,7 +181,6 @@ header {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-top: 20px;
 }
 
 .nav a {
@@ -310,25 +196,10 @@ header {
   margin-left: -12px;
 }
 
-.nav a i {
-  width: 24px;
-  font-size: 20px;
-}
-
-.nav a:hover {
-  background: var(--hover-bg);
-  color: var(--google-blue);
-}
-
-.nav a.active {
-  background: #e8f0fe;
-  color: var(--google-blue);
-  font-weight: 600;
-}
-
-.nav a.active i {
-  color: var(--google-blue);
-}
+.nav a i { width: 24px; font-size: 20px; }
+.nav a:hover { background: var(--hover-bg); color: var(--google-blue); }
+.nav a.active { background: #e8f0fe; color: var(--google-blue); font-weight: 600; }
+.nav a.active i { color: var(--google-blue); }
 
 /* ========== CONTENT ========== */
 .content {
@@ -338,7 +209,6 @@ header {
   background: var(--light-bg);
 }
 
-/* Google-style cards */
 .card {
   background: white;
   padding: 24px;
@@ -349,27 +219,11 @@ header {
   transition: all 0.2s;
 }
 
-.card:hover {
-  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-  border-color: var(--google-blue);
-}
+.card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.12); border-color: var(--google-blue); }
+.card h2 { font-size: 18px; font-weight: 500; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+.card h2 i { color: var(--google-blue); font-size: 20px; }
 
-.card h2 {
-  font-size: 18px;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin-bottom: 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.card h2 i {
-  color: var(--google-blue);
-  font-size: 20px;
-}
-
-/* Google-style search bar */
+/* ========== SEARCH BAR ========== */
 .search-container {
   display: flex;
   align-items: center;
@@ -378,7 +232,7 @@ header {
   border-radius: 24px;
   padding: 4px 4px 4px 20px;
   transition: all 0.2s;
-  max-width: 600px;
+  max-width: 100%;
 }
 
 .search-container:focus-within {
@@ -398,35 +252,23 @@ header {
   outline: none;
   font-size: 15px;
   background: transparent;
+  width: 100%;
 }
 
-.search-container button {
-  background: var(--google-blue);
-  color: white;
-  border: none;
-  padding: 8px 24px;
-  border-radius: 24px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 14px;
+.search-container input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.8;
 }
 
-.search-container button:hover {
-  background: #3b78e7;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(66,133,244,0.4);
-}
-
-/* Filter dropdown */
-.filter-container {
+/* ========== FILTER CONTROLS ========== */
+.filter-controls {
   display: flex;
-  align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
 }
 
-.filter-container select {
+.filter-select {
   padding: 10px 16px;
   border-radius: 24px;
   border: 1px solid var(--border-color);
@@ -434,97 +276,207 @@ header {
   font-size: 14px;
   background: white;
   cursor: pointer;
-  min-width: 200px;
+  min-width: 180px;
   color: var(--text-primary);
+  flex: 1 1 auto;
 }
 
-.filter-container select:focus {
+.filter-select:focus {
   border-color: var(--google-blue);
   box-shadow: 0 1px 6px rgba(66,133,244,0.2);
 }
 
-/* Table styling - Google style */
-.table-wrapper {
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-  overflow: hidden;
-  background: white;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-thead th {
-  background: #f8f9fa;
-  color: var(--text-secondary);
-  font-weight: 500;
-  font-size: 14px;
-  padding: 16px;
-  text-align: left;
-  border-bottom: 2px solid var(--border-color);
-}
-
-tbody tr {
-  border-bottom: 1px solid var(--border-color);
-  transition: all 0.2s;
-}
-
-tbody tr:hover {
+.filter-select:disabled {
   background: var(--hover-bg);
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
-td {
-  padding: 16px;
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
-/* View button - Google style */
-.view-btn {
-  background: white;
-  color: var(--google-blue);
-  border: 1px solid var(--border-color);
-  padding: 8px 16px;
+.reset-btn {
+  padding: 10px 20px;
   border-radius: 24px;
-  font-size: 13px;
-  font-weight: 500;
+  border: 1px solid var(--border-color);
+  background: white;
+  color: var(--text-secondary);
+  font-size: 14px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   transition: all 0.2s;
+}
+
+.reset-btn:hover {
+  background: var(--hover-bg);
+  color: var(--google-blue);
+  border-color: var(--google-blue);
+}
+
+/* ========== CARD GRID ========== */
+.theses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.thesis-card {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.thesis-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  border-color: var(--google-blue);
+}
+
+.thesis-card:active {
+  transform: translateY(-2px);
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.card-icon {
+  background: #e8f0fe;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--google-red);
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.card-title {
+  flex: 1;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.course-badge {
+  background: #e8f0fe;
+  color: var(--google-blue);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
-.view-btn i {
-  font-size: 14px;
+.course-badge i {
+  font-size: 10px;
 }
 
-.view-btn:hover {
-  background: var(--google-blue);
-  color: white;
-  border-color: var(--google-blue);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(66,133,244,0.3);
+.topics-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+  min-height: 32px;
 }
 
-.view-btn:hover i {
-  color: white;
-}
-
-/* Course badge */
-.course-badge {
+.topic-badge {
   background: #e8f0fe;
   color: var(--google-blue);
-  padding: 4px 12px;
+  padding: 4px 10px;
   border-radius: 16px;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 500;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
 }
 
-/* Floating action button */
+.topic-badge i {
+  font-size: 9px;
+}
+
+.topic-badge:hover {
+  background: var(--google-blue);
+  color: white;
+  transform: scale(1.05);
+}
+
+.topic-placeholder {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.card-footer {
+  margin-top: auto;
+  padding-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--border-color);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.card-footer i {
+  margin-right: 4px;
+  font-size: 11px;
+}
+
+/* ========== EMPTY STATE ========== */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  grid-column: 1 / -1;
+}
+
+.empty-state i {
+  font-size: 64px;
+  color: var(--border-color);
+  margin-bottom: 20px;
+}
+
+.empty-state h3 {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  color: var(--text-secondary);
+}
+
+/* ========== FLOATING ACTION BUTTON ========== */
 .fab {
   position: fixed;
   bottom: 30px;
@@ -550,7 +502,7 @@ td {
   box-shadow: 0 6px 16px rgba(66,133,244,0.5);
 }
 
-/* History panel */
+/* ========== HISTORY PANEL ========== */
 .history-panel {
   position: fixed;
   bottom: -100%;
@@ -566,21 +518,9 @@ td {
   border: 1px solid var(--border-color);
 }
 
-.history-panel.show {
-  bottom: 0;
-}
-
-.history-panel h3 {
-  margin-bottom: 16px;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.history-panel h3 i {
-  color: var(--google-blue);
-}
+.history-panel.show { bottom: 0; }
+.history-panel h3 { margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.history-panel h3 i { color: var(--google-blue); }
 
 .close-panel {
   position: absolute;
@@ -599,91 +539,31 @@ td {
   color: #e8eaed;
 }
 
-.dark-mode header {
-  background: #2d2e30;
-  border-bottom-color: #5f6368;
-}
-
-.dark-mode .sidebar {
-  background: #2d2e30;
-  border-right-color: #5f6368;
-}
-
-.dark-mode .card {
-  background: #2d2e30;
-  border-color: #5f6368;
-  color: #e8eaed;
-}
-
-.dark-mode .card:hover {
-  border-color: var(--google-blue);
-}
-
-.dark-mode .nav a {
-  color: #bdc1c6;
-}
-
-.dark-mode .nav a:hover {
-  background: #3c4043;
-  color: white;
-}
-
-.dark-mode .nav a.active {
-  background: #394457;
-  color: var(--google-blue);
-}
-
-.dark-mode .brand h2 {
-  color: #e8eaed;
-}
-
+.dark-mode header { background: #2d2e30; border-bottom-color: #5f6368; }
+.dark-mode .sidebar { background: #2d2e30; border-right-color: #5f6368; }
+.dark-mode .card { background: #2d2e30; border-color: #5f6368; color: #e8eaed; }
+.dark-mode .card:hover { border-color: var(--google-blue); }
+.dark-mode .brand h2 { color: #e8eaed; }
+.dark-mode .nav a { color: #bdc1c6; }
+.dark-mode .nav a:hover { background: #3c4043; color: white; }
+.dark-mode .nav a.active { background: #394457; color: var(--google-blue); }
 .dark-mode input, 
 .dark-mode select,
-.dark-mode .search-container {
+.dark-mode .search-container,
+.dark-mode .reset-btn,
+.dark-mode .filter-select {
   background: #3c4043;
   border-color: #5f6368;
   color: #e8eaed;
 }
-
-.dark-mode table {
-  background: #2d2e30;
-}
-
-.dark-mode thead th {
-  background: #3c4043;
-  color: #bdc1c6;
-  border-bottom-color: #5f6368;
-}
-
-.dark-mode tbody tr {
-  border-bottom-color: #5f6368;
-}
-
-.dark-mode tbody tr:hover {
-  background: #3c4043;
-}
-
-.dark-mode td {
-  color: #e8eaed;
-}
-
-.dark-mode .dropdown {
-  background: #2d2e30;
-  border-color: #5f6368;
-}
-
-.dark-mode .dropdown a {
-  color: #e8eaed;
-}
-
-.dark-mode .dropdown a:hover {
-  background: #3c4043;
-}
-
-.dark-mode .course-badge {
-  background: #394457;
-  color: var(--google-blue);
-}
+.dark-mode .thesis-card { background: #2d2e30; border-color: #5f6368; }
+.dark-mode .thesis-card:hover { border-color: var(--google-blue); }
+.dark-mode .card-icon { background: #394457; }
+.dark-mode .topic-badge { background: #394457; color: #8ab4f8; }
+.dark-mode .topic-badge:hover { background: #8ab4f8; color: #202124; }
+.dark-mode .dropdown { background: #2d2e30; border-color: #5f6368; }
+.dark-mode .dropdown a { color: #e8eaed; }
+.dark-mode .course-badge { background: #394457; color: #8ab4f8; }
 
 /* ========== MOBILE RESPONSIVE ========== */
 @media (max-width: 768px) {
@@ -695,95 +575,30 @@ td {
     box-shadow: 2px 0 8px rgba(0,0,0,0.1);
   }
 
-  .sidebar.open {
-    left: 0;
-  }
-
-  .content {
-    margin-left: 0;
-    padding: 16px;
-  }
-
-  header {
-    padding: 8px 16px;
-  }
-
-  .logo {
-    font-size: 22px;
-  }
-
-  .search-container {
-    max-width: 100%;
-  }
-
-  .search-container button {
-    padding: 8px 16px;
-  }
-
-  .filter-container {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .filter-container select {
-    width: 100%;
-  }
-
-  table {
-    display: block;
-    overflow-x: auto;
-  }
-
-  td, th {
-    white-space: nowrap;
-  }
-
-  /* Mobile menu toggle button */
+  .sidebar.open { left: 0; }
+  .content { margin-left: 0; padding: 16px; }
+  header { padding: 8px 16px; }
+  .logo { font-size: 22px; }
+  
   .menu-toggle {
     display: block !important;
     font-size: 24px;
     color: var(--text-secondary);
     cursor: pointer;
     margin-right: 12px;
+    background: none;
+    border: none;
   }
 
-  .fab {
-    width: 48px;
-    height: 48px;
-    font-size: 20px;
-    bottom: 20px;
-    right: 20px;
-  }
+  .filter-controls { flex-direction: column; }
+  .filter-select { width: 100%; }
+  .reset-btn { width: 100%; justify-content: center; }
+  .theses-grid { grid-template-columns: 1fr; }
+  .fab { width: 48px; height: 48px; font-size: 20px; bottom: 20px; right: 20px; }
 }
 
-/* Tablet adjustments */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .sidebar {
-    width: 220px;
-  }
+.menu-toggle { display: none; }
 
-  .content {
-    margin-left: 220px;
-    padding: 24px;
-  }
-}
-
-/* Menu toggle button - hidden on desktop */
-.menu-toggle {
-  display: none;
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.menu-toggle:hover {
-  color: var(--google-blue);
-}
-
-/* Overlay for mobile */
 .overlay {
   display: none;
   position: fixed;
@@ -796,49 +611,36 @@ td {
   backdrop-filter: blur(2px);
 }
 
-.overlay.show {
-  display: block;
-}
+.overlay.show { display: block; }
 </style>
 </head>
 
 <body>
 
 <header>
-  <!-- Mobile menu toggle -->
-  <button class="menu-toggle" id="menuToggle">
-    <i class="fas fa-bars"></i>
-  </button>
-
-  <!-- Colorful DIGILIB logo (header) -->
+  <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
   <div class="logo">
     <span>D</span><span>I</span><span>G</span><span>I</span><span>L</span><span>I</span><span>B</span>
   </div>
-
-  <!-- Header right section (NO BELL ICON) -->
   <div class="header-right">
-    <!-- Profile bubble -->
     <div class="profile-bubble" id="profileBubble">
       <%= username ? username.charAt(0).toUpperCase() : 'U' %>
       <div class="dropdown" id="profileDropdown">
         <a href="/logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
-        <label><i class="fas fa-moon"></i> <input type="checkbox" id="darkToggle" style="margin-left: 8px;"> Dark Mode</label>
+        <label><i class="fas fa-moon"></i> <input type="checkbox" id="darkToggle"> Dark Mode</label>
       </div>
     </div>
   </div>
 </header>
 
 <div class="wrapper">
-  <!-- Overlay for mobile -->
   <div class="overlay" id="overlay"></div>
-
-  <!-- SIDEBAR (WITH LOGO RESTORED) -->
+  
   <aside class="sidebar" id="sidebar">
     <div class="brand">
       <img src="/logo.png" alt="DIGILIB">
       <h2>DIGILIB</h2>
     </div>
-
     <nav class="nav">
       <a href="/" class="nav-link active"><i class="fas fa-home"></i> Dashboard</a>
       <a href="/favorites" class="nav-link"><i class="fas fa-star"></i> Favorites</a>
@@ -847,93 +649,86 @@ td {
     </nav>
   </aside>
 
-  <!-- CONTENT -->
   <main class="content">
-
-    <!-- Search card -->
     <div class="card">
       <h2><i class="fas fa-search"></i> Search Theses</h2>
-      <form action="/search" method="GET" style="width: 100%;">
+      <form action="/search" method="GET">
         <div class="search-container">
           <i class="fas fa-search"></i>
           <input type="text" name="q" placeholder="Search by title, author, or keywords..." required>
-          <button type="submit">Search</button>
         </div>
       </form>
     </div>
 
-    <!-- Theses list card -->
     <div class="card">
       <h2><i class="fas fa-book"></i> Available Theses</h2>
-
-      <div class="filter-container">
-        <select id="tableFilter">
+      
+      <div class="filter-controls">
+        <select id="courseFilter" class="filter-select">
           <option value="">All Courses</option>
           <% clusters.forEach((c,i)=>{ %>
             <option value="<%= i %>"><%= c %></option>
           <% }) %>
         </select>
+        
+        <select id="topicFilter" class="filter-select" disabled>
+          <option value="">All Topics</option>
+        </select>
+        
+        <button id="resetFilters" class="reset-btn">
+          <i class="fas fa-undo-alt"></i> Reset
+        </button>
       </div>
 
-      <!-- SCROLLABLE TABLE -->
-      <div class="table-wrapper">
-        <table id="pdfTable">
-  <thead>
-    <tr>
-      <th>Title</th>
-      <th>Course</th>
-      <th>Topics</th>  <!-- NEW COLUMN -->
-      <th>Action</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% if (pdfs.length === 0) { %>
-      <tr>
-        <td colspan="4" style="text-align: center; padding: 40px; color: var(--text-secondary);">
-          <i class="fas fa-folder-open" style="font-size: 48px; opacity: 0.5; margin-bottom: 16px; display: block;"></i>
-          No theses available yet
-        </td>
-      </tr>
-    <% } else { %>
-      <% pdfs.forEach(pdf => { %>
-      <tr data-cluster="<%= pdf.cluster %>" data-id="<%= pdf.id %>">
-        <td><i class="fas fa-file-pdf" style="color: var(--google-red); margin-right: 8px;"></i> <%= pdf.title %></td>
-        <td><span class="course-badge"><%= clusters[pdf.cluster] || 'Unknown' %></span></td>
-        <td class="topics-cell" data-pdf-id="<%= pdf.id %>">
-          <span class="topic-placeholder">Loading topics...</span>
-        </td>
-        <td>
-          <a href="/view/<%= pdf.id %>">
-            <button class="view-btn"><i class="fas fa-eye"></i> View</button>
-          </a>
-        </td>
-      </tr>
-      <% }) %>
-    <% } %>
-  </tbody>
-</table>
+      <div id="thesesGrid" class="theses-grid">
+        <% if (pdfs.length === 0) { %>
+          <div class="empty-state">
+            <i class="fas fa-folder-open"></i>
+            <h3>No theses available yet</h3>
+            <p>Check back later for new research papers</p>
+          </div>
+        <% } else { %>
+          <% pdfs.forEach(pdf => { %>
+            <div class="thesis-card" data-cluster="<%= pdf.cluster %>" data-id="<%= pdf.id %>" onclick="window.location.href='/view/<%= pdf.id %>'">
+              <div class="card-header">
+                <div class="card-icon">
+                  <i class="fas fa-file-pdf"></i>
+                </div>
+                <div class="card-title"><%= pdf.title %></div>
+              </div>
+              
+              <div class="card-meta">
+                <span class="course-badge">
+                  <i class="fas fa-graduation-cap"></i> <%= clusters[pdf.cluster] || 'Unknown' %>
+                </span>
+              </div>
+              
+              <div class="topics-container" data-pdf-id="<%= pdf.id %>">
+                <span class="topic-placeholder"><i class="fas fa-spinner fa-spin"></i> Loading topics...</span>
+              </div>
+              
+              <div class="card-footer">
+                <span><i class="fas fa-hashtag"></i> ID: <%= pdf.id %></span>
+                <span><i class="fas fa-calendar"></i> <%= new Date(pdf.uploaded_at).toLocaleDateString() %></span>
+              </div>
+            </div>
+          <% }) %>
+        <% } %>
       </div>
     </div>
-
   </main>
 </div>
 
-<!-- Floating action button for quick actions -->
-<button class="fab" id="fabBtn" onclick="toggleHistory()">
-  <i class="fas fa-history"></i>
-</button>
+<button class="fab" id="fabBtn" onclick="toggleHistory()"><i class="fas fa-history"></i></button>
 
-<!-- History panel -->
 <div class="history-panel" id="historyPanel">
   <button class="close-panel" onclick="toggleHistory()"><i class="fas fa-times"></i></button>
   <h3><i class="fas fa-history"></i> Recent Activity</h3>
-  <div id="historyContent">
-    <p style="color: var(--text-secondary); text-align: center; padding: 20px;">Loading your recent activity...</p>
-  </div>
+  <div id="historyContent"><p style="color: var(--text-secondary); text-align: center; padding: 20px;">Loading...</p></div>
 </div>
 
 <script>
-// Profile dropdown
+const clusters = <%- JSON.stringify(clusters) %>;
 const profileBubble = document.getElementById('profileBubble');
 const profileDropdown = document.getElementById('profileDropdown');
 
@@ -942,59 +737,107 @@ profileBubble.onclick = (e) => {
   profileDropdown.style.display = profileDropdown.style.display === 'block' ? 'none' : 'block';
 };
 
-// Close dropdown when clicking outside
-document.addEventListener('click', () => {
-  profileDropdown.style.display = 'none';
-});
-
+document.addEventListener('click', () => { profileDropdown.style.display = 'none'; });
 profileDropdown.onclick = (e) => e.stopPropagation();
 
-// Dark mode toggle
+// Dark mode
 const darkToggle = document.getElementById('darkToggle');
 darkToggle.onchange = () => {
   document.body.classList.toggle('dark-mode', darkToggle.checked);
   localStorage.setItem('darkMode', darkToggle.checked);
 };
-
-// Load dark mode preference
 const savedDarkMode = localStorage.getItem('darkMode') === 'true';
 darkToggle.checked = savedDarkMode;
 if (savedDarkMode) document.body.classList.add('dark-mode');
 
-// Active nav link
-document.querySelectorAll('.nav-link').forEach(link => {
-  if (window.location.pathname === link.getAttribute('href')) {
-    link.classList.add('active');
-  }
-});
-
-// Table filter
-const tableFilter = document.getElementById('tableFilter');
-if (tableFilter) {
-  tableFilter.onchange = () => {
-    document.querySelectorAll('#pdfTable tbody tr').forEach(tr => {
-      tr.style.display = tableFilter.value === '' || tr.dataset.cluster === tableFilter.value ? '' : 'none';
-    });
-  };
-}
-
-// Mobile menu toggle
+// Mobile menu
 const menuToggle = document.getElementById('menuToggle');
 const sidebar = document.getElementById('sidebar');
 const overlay = document.getElementById('overlay');
+menuToggle.onclick = () => {
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('show');
+};
+overlay.onclick = () => {
+  sidebar.classList.remove('open');
+  overlay.classList.remove('show');
+};
 
-if (menuToggle) {
-  menuToggle.onclick = () => {
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('show');
-  };
+// Load topics for each card
+document.querySelectorAll('.topics-container').forEach(container => {
+  const pdfId = container.dataset.pdfId;
+  
+  fetch(`/api/topics/${pdfId}`)
+    .then(res => res.json())
+    .then(topics => {
+      if (topics && topics.length > 0) {
+        container.innerHTML = topics.slice(0, 3).map(t => 
+          `<span class="topic-badge"><i class="fas fa-hashtag"></i> ${t.topic_name}</span>`
+        ).join('');
+      } else {
+        container.innerHTML = '<span class="topic-placeholder">No topics</span>';
+      }
+    })
+    .catch(() => {
+      container.innerHTML = '<span class="topic-placeholder">Failed to load</span>';
+    });
+});
+
+// Filter controls
+const courseFilter = document.getElementById('courseFilter');
+const topicFilter = document.getElementById('topicFilter');
+const resetBtn = document.getElementById('resetFilters');
+const cards = document.querySelectorAll('.thesis-card');
+
+// Load topics for filter when course changes
+courseFilter.addEventListener('change', function() {
+  const course = this.value;
+  topicFilter.disabled = !course;
+  
+  if (course) {
+    topicFilter.innerHTML = '<option value="">Loading...</option>';
+    fetch(`/api/course-topics/${course}`)
+      .then(res => res.json())
+      .then(topics => {
+        topicFilter.innerHTML = '<option value="">All Topics</option>' +
+          topics.map(t => `<option value="${t.topic_name}">${t.topic_name}</option>`).join('');
+      })
+      .catch(() => {
+        topicFilter.innerHTML = '<option value="">Error loading topics</option>';
+      });
+  } else {
+    topicFilter.innerHTML = '<option value="">All Topics</option>';
+  }
+  
+  filterCards();
+});
+
+topicFilter.addEventListener('change', filterCards);
+resetBtn.addEventListener('click', resetFilters);
+
+function filterCards() {
+  const selectedCourse = courseFilter.value;
+  const selectedTopic = topicFilter.value?.toLowerCase();
+  
+  cards.forEach(card => {
+    const matchesCourse = !selectedCourse || card.dataset.cluster === selectedCourse;
+    
+    let matchesTopic = true;
+    if (selectedTopic && selectedTopic !== '') {
+      const topicBadges = card.querySelectorAll('.topic-badge');
+      const topicTexts = Array.from(topicBadges).map(badge => badge.textContent.toLowerCase());
+      matchesTopic = topicTexts.some(text => text.includes(selectedTopic));
+    }
+    
+    card.style.display = matchesCourse && matchesTopic ? 'flex' : 'none';
+  });
 }
 
-if (overlay) {
-  overlay.onclick = () => {
-    sidebar.classList.remove('open');
-    overlay.classList.remove('show');
-  };
+function resetFilters() {
+  courseFilter.value = '';
+  topicFilter.disabled = true;
+  topicFilter.innerHTML = '<option value="">All Topics</option>';
+  cards.forEach(card => card.style.display = 'flex');
 }
 
 // History panel
@@ -1002,31 +845,25 @@ function toggleHistory() {
   const panel = document.getElementById('historyPanel');
   const fab = document.getElementById('fabBtn');
   panel.classList.toggle('show');
+  fab.innerHTML = panel.classList.contains('show') ? '<i class="fas fa-times"></i>' : '<i class="fas fa-history"></i>';
   
-  // Change icon when panel is open
-  if (panel.classList.contains('show')) {
-    fab.innerHTML = '<i class="fas fa-times"></i>';
-    loadHistory();
-  } else {
-    fab.innerHTML = '<i class="fas fa-history"></i>';
-  }
+  if (panel.classList.contains('show')) loadHistory();
 }
 
-// Load recent history via AJAX
 function loadHistory() {
   fetch('/user/history-data')
     .then(res => res.json())
     .then(data => {
       const content = document.getElementById('historyContent');
       if (data.length === 0) {
-        content.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">No recent activity</p>';
+        content.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">No recent activity</p>';
       } else {
         let html = '<ul style="list-style: none; padding: 0;">';
         data.slice(0, 5).forEach(item => {
           html += `<li style="padding: 12px; border-bottom: 1px solid var(--border-color);">
             <i class="fas fa-search" style="color: var(--google-blue); margin-right: 8px;"></i>
             ${item.query || 'Viewed thesis'} 
-            <span style="float: right; color: var(--text-secondary); font-size: 12px;">${item.month || ''}</span>
+            <span style="float: right; color: var(--text-secondary);">${item.month || ''}</span>
           </li>`;
         });
         html += '</ul>';
@@ -1034,93 +871,16 @@ function loadHistory() {
       }
     })
     .catch(() => {
-      document.getElementById('historyContent').innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Error loading history</p>';
+      document.getElementById('historyContent').innerHTML = '<p style="color: var(--text-secondary);">Error loading history</p>';
     });
 }
-// Load topics for each PDF
-document.querySelectorAll('[data-pdf-id]').forEach(cell => {
-  const pdfId = cell.dataset.pdfId;
-  
-  fetch(`/api/topics/${pdfId}`)
-    .then(res => res.json())
-    .then(topics => {
-      if (topics && topics.length > 0) {
-        cell.innerHTML = topics.slice(0, 4).map(t => 
-          `<span class="topic-badge"><i class="fas fa-hashtag"></i> ${t.topic_name}</span>`
-        ).join('');
-      } else {
-        cell.innerHTML = '<span class="no-topics">No topics</span>';
-      }
-    })
-    .catch(() => {
-      cell.innerHTML = '<span class="no-topics">Failed to load</span>';
-    });
+
+// Active nav link
+document.querySelectorAll('.nav-link').forEach(link => {
+  if (window.location.pathname === link.getAttribute('href')) link.classList.add('active');
 });
 
-// Add topic filter dropdown
-const filterContainer = document.querySelector('.filter-container');
-if (filterContainer) {
-  // Create topic filter
-  const topicFilter = document.createElement('select');
-  topicFilter.id = 'topicFilter';
-  topicFilter.innerHTML = '<option value="">All Topics</option>';
-  topicFilter.disabled = true;
-  
-  // Insert after course filter
-  const courseFilter = document.getElementById('tableFilter');
-  if (courseFilter && courseFilter.parentNode) {
-    courseFilter.parentNode.insertBefore(topicFilter, courseFilter.nextSibling);
-  }
-  
-  // Load topics when course is selected
-  const tableFilter = document.getElementById('tableFilter');
-  if (tableFilter) {
-    tableFilter.addEventListener('change', function() {
-      const course = this.value;
-      
-      if (course) {
-        topicFilter.disabled = false;
-        topicFilter.innerHTML = '<option value="">Loading topics...</option>';
-        
-        fetch(`/api/course-topics/${course}`)
-          .then(res => res.json())
-          .then(topics => {
-            topicFilter.innerHTML = '<option value="">All Topics</option>' +
-              topics.map(t => `<option value="${t.topic_name}">${t.topic_name}</option>`).join('');
-          })
-          .catch(() => {
-            topicFilter.innerHTML = '<option value="">Error loading topics</option>';
-          });
-      } else {
-        topicFilter.disabled = true;
-        topicFilter.innerHTML = '<option value="">All Topics</option>';
-      }
-    });
-  }
-  
-  // Filter by topic
-  topicFilter.addEventListener('change', function() {
-    const selectedTopic = this.value.toLowerCase();
-    const rows = document.querySelectorAll('#pdfTable tbody tr');
-    
-    rows.forEach(row => {
-      const topicCells = row.querySelectorAll('.topic-badge');
-      const topicTexts = Array.from(topicCells).map(cell => cell.textContent.toLowerCase());
-      
-      if (!selectedTopic || topicTexts.some(text => text.includes(selectedTopic))) {
-        row.style.display = '';
-      } else {
-        row.style.display = 'none';
-      }
-    });
-  });
-}
-// Handle page cache
-window.addEventListener('pageshow', function (event) {
-  if (event.persisted) {
-    window.location.reload();
-  }
-});
+window.addEventListener('pageshow', (event) => { if (event.persisted) window.location.reload(); });
 </script>
 
 </body>

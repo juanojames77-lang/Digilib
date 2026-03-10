@@ -270,6 +270,7 @@ main {
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
+  margin-bottom: 8px;
 }
 
 .course-badge {
@@ -302,6 +303,30 @@ main {
 
 .private-badge i {
   font-size: 12px;
+}
+
+/* Topic badges */
+.result-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.topic-badge {
+  background: #e8f0fe;
+  color: var(--google-blue);
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.topic-badge i {
+  font-size: 9px;
 }
 
 .result-actions {
@@ -464,6 +489,11 @@ main {
   color: #8ab4f8;
 }
 
+.dark-mode .topic-badge {
+  background: #394457;
+  color: #8ab4f8;
+}
+
 .dark-mode .view-btn {
   background: #3c4043;
   border-color: #5f6368;
@@ -614,6 +644,21 @@ main {
                 </span>
               <% } %>
             </div>
+            <!-- Topic badges -->
+            <div class="result-topics">
+              <% if(r.topics && r.topics.length > 0) { %>
+                <% r.topics.slice(0, 4).forEach(topic => { %>
+                  <span class="topic-badge">
+                    <i class="fas fa-hashtag"></i> <%= topic %>
+                  </span>
+                <% }) %>
+                <% if(r.topics.length > 4) { %>
+                  <span class="topic-badge">
+                    +<%= r.topics.length - 4 %> more
+                  </span>
+                <% } %>
+              <% } %>
+            </div>
           </div>
           <div class="result-actions">
             <a href="/view/<%= r.id %>" class="view-btn">
@@ -627,7 +672,7 @@ main {
 </main>
 
 <script>
-// Dark mode support (if you have dark mode toggle elsewhere)
+// Dark mode support
 function initDarkMode() {
   const darkMode = localStorage.getItem('darkMode') === 'true';
   if (darkMode) {

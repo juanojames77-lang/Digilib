@@ -217,6 +217,37 @@
       100% { transform: rotate(360deg); }
     }
 
+    /* Topics styles for admin */
+    .topics-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .topic-badge {
+      background: #e8f0fe;
+      color: var(--google-blue);
+      padding: 6px 12px;
+      border-radius: 24px;
+      font-size: 12px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .topic-badge i {
+      font-size: 10px;
+    }
+
+    .topic-placeholder {
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-style: italic;
+    }
+
     /* Side Panel */
     .side-panel {
       flex: 1;
@@ -263,6 +294,8 @@
       display: flex;
       align-items: center;
       gap: 12px;
+      text-decoration: none;
+      color: inherit;
     }
 
     .similar-item:hover {
@@ -293,32 +326,43 @@
       font-size: 14px;
       font-weight: 500;
       color: var(--text-primary);
-      margin-bottom: 4px;
+      margin-bottom: 6px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
-    .similar-info a {
-      color: inherit;
-      text-decoration: none;
-    }
-
-    .similar-info a:hover {
-      color: var(--google-blue);
-    }
-
     .similar-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       font-size: 12px;
       color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
 
-    .similar-meta i {
-      font-size: 10px;
+    .similar-course {
+      background: #e8f0fe;
       color: var(--google-blue);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+    }
+
+    .match-count {
+      color: var(--google-green);
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .loading-similar {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-secondary);
+    }
+
+    .loading-similar i {
+      animation: spin 1s linear infinite;
+      margin-right: 8px;
     }
 
     .no-similar {
@@ -331,10 +375,6 @@
       font-size: 48px;
       color: var(--border-color);
       margin-bottom: 16px;
-    }
-
-    .no-similar p {
-      font-size: 14px;
     }
 
     /* PDF Controls (optional) */
@@ -430,6 +470,11 @@
       color: #e8eaed;
     }
 
+    .dark-mode .topic-badge {
+      background: #394457;
+      color: #8ab4f8;
+    }
+
     .dark-mode .similar-item {
       background: #3c4043;
       border-color: #5f6368;
@@ -443,12 +488,9 @@
       color: #e8eaed;
     }
 
-    .dark-mode .similar-info a:hover {
+    .dark-mode .similar-course {
+      background: #394457;
       color: #8ab4f8;
-    }
-
-    .dark-mode .similar-meta {
-      color: #9aa0a6;
     }
 
     .dark-mode .pdf-controls {
@@ -575,39 +617,30 @@
     </div>
   </div>
 
-  <!-- SIDE PANEL - SIMILAR THESES -->
+  <!-- SIDE PANEL - TOPICS & SIMILAR THESES -->
   <div class="side-panel">
     <div class="panel-header">
       <h3>
-        <i class="fas fa-file-signature"></i>
-        Similar Theses
+        <i class="fas fa-tags"></i>
+        Thesis Topics
       </h3>
     </div>
 
-    <div class="similar-list">
-      <% if(similar.length === 0){ %>
-        <div class="no-similar">
-          <i class="fas fa-folder-open"></i>
-          <p>No similar documents found</p>
-        </div>
-      <% } else { %>
-        <% similar.forEach(s => { %>
-          <a href="/view-admin/<%= s.id %>" style="text-decoration: none;">
-            <div class="similar-item">
-              <div class="similar-icon">
-                <i class="fas fa-file-pdf"></i>
-              </div>
-              <div class="similar-info">
-                <h4><%= s.title %></h4>
-                <div class="similar-meta">
-                  <i class="fas fa-hashtag"></i> ID: <%= s.id %>
-                  <i class="fas fa-arrow-right"></i> View
-                </div>
-              </div>
-            </div>
-          </a>
-        <% }) %>
-      <% } %>
+    <div id="topicsContainer" class="topics-container">
+      <span class="topic-placeholder"><i class="fas fa-spinner fa-spin"></i> Loading topics...</span>
+    </div>
+
+    <div class="panel-header" style="border-top: 1px solid var(--border-color);">
+      <h3>
+        <i class="fas fa-file-signature"></i>
+        Similar by Topics
+      </h3>
+    </div>
+
+    <div class="similar-list" id="similarTopicsList">
+      <div class="loading-similar">
+        <i class="fas fa-spinner fa-spin"></i> Finding similar theses...
+      </div>
     </div>
   </div>
 </div>
@@ -616,12 +649,9 @@
   // Hide loader when PDF loads
   function hideLoader() {
     const loader = document.getElementById('pdfLoader');
-    if (loader) {
-      loader.style.display = 'none';
-    }
+    if (loader) loader.style.display = 'none';
   }
 
-  // Show error if PDF fails to load
   function showError() {
     const loader = document.getElementById('pdfLoader');
     if (loader) {
@@ -630,14 +660,75 @@
     }
   }
 
+  // Load topics for current thesis
+  async function loadTopics() {
+    const pdfId = '<%= file.id %>';
+    const container = document.getElementById('topicsContainer');
+    
+    try {
+      const response = await fetch(`/api/topics/${pdfId}`);
+      const topics = await response.json();
+      
+      if (topics && topics.length > 0) {
+        container.innerHTML = topics.map(t => 
+          `<span class="topic-badge"><i class="fas fa-hashtag"></i> ${t.topic_name}</span>`
+        ).join('');
+      } else {
+        container.innerHTML = '<span class="topic-badge">No topics extracted</span>';
+      }
+    } catch (error) {
+      container.innerHTML = '<span class="topic-badge">Error loading topics</span>';
+    }
+  }
+
+  // Load similar theses by topics
+  async function loadSimilarByTopics() {
+    const pdfId = '<%= file.id %>';
+    const list = document.getElementById('similarTopicsList');
+    const clusters = <%- JSON.stringify(['BSCS','BSED-MATH','BSES','BSHM','BTLED-HE','BEED']) %>;
+    
+    try {
+      const response = await fetch(`/api/similar-by-topics/${pdfId}?limit=5`);
+      const theses = await response.json();
+      
+      if (theses.length === 0) {
+        list.innerHTML = '<div class="no-similar"><i class="fas fa-folder-open"></i><p>No similar theses found</p></div>';
+        return;
+      }
+      
+      let html = '';
+      theses.forEach(thesis => {
+        html += `
+          <a href="/view-admin/${thesis.id}" style="text-decoration: none;">
+            <div class="similar-item">
+              <div class="similar-icon">
+                <i class="fas fa-file-pdf"></i>
+              </div>
+              <div class="similar-info">
+                <h4>${thesis.title}</h4>
+                <div class="similar-meta">
+                  <span class="similar-course">${thesis.course || clusters[thesis.cluster]}</span>
+                  <span class="match-count">${thesis.topic_match_count} matches</span>
+                </div>
+              </div>
+            </div>
+          </a>
+        `;
+      });
+      
+      list.innerHTML = html;
+      
+    } catch (error) {
+      list.innerHTML = '<div class="no-similar"><i class="fas fa-exclamation-triangle"></i><p>Failed to load</p></div>';
+    }
+  }
+
   // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
-    // ESC key to go back
     if (e.key === 'Escape') {
       window.location.href = '/admin';
     }
     
-    // P key to toggle private/public
     if (e.key === 'p' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
       document.querySelector('form[action*="toggle-private"] button')?.click();
@@ -647,14 +738,15 @@
   // Dark mode support
   function initDarkMode() {
     const darkMode = localStorage.getItem('darkMode') === 'true';
-    if (darkMode) {
-      document.body.classList.add('dark-mode');
-    }
+    if (darkMode) document.body.classList.add('dark-mode');
   }
-
   initDarkMode();
 
-  // Set timeout to hide loader if PDF takes too long
+  // Load on page load
+  loadTopics();
+  loadSimilarByTopics();
+
+  // Set timeout for PDF loader
   setTimeout(() => {
     const loader = document.getElementById('pdfLoader');
     if (loader && loader.style.display !== 'none') {

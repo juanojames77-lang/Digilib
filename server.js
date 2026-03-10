@@ -275,7 +275,7 @@ app.get('/api/popular-topics', async (req, res) => {
   }
 });
 
-/**
+/*
  * Search theses by topic
  */
 app.get('/search-by-topic', requireLogin, async (req, res) => {
@@ -321,6 +321,84 @@ app.get('/search-by-topic', requireLogin, async (req, res) => {
     res.status(500).send('Search failed');
   }
 });
+
+// ========== SIMILAR THESES BY TOPICS (ADD THIS NEW ROUTE) ==========
+/**
+ * Find theses that share similar topics with the current thesis
+ * This is what makes recommendations like "frog detection" showing related theses
+ */
+app.get('/api/similar-by-topics/:pdfId', requireLogin, async (req, res) => {
+    try {
+        const pdfId = req.params.pdfId;
+        const limit = req.query.limit || 5;
+        
+        console.log(`🔍 Finding similar theses for PDF ID: ${pdfId}`);
+        
+        // Step 1: Get the topics of the current thesis
+        const currentTopics = await pool.query(
+            `SELECT topic_name, topic_weight 
+             FROM thesis_topics 
+             WHERE pdf_id = $1 
+             ORDER BY topic_weight DESC 
+             LIMIT 10`,
+            [pdfId]
+        );
+        
+        // If no topics found, return empty array
+        if (currentTopics.rows.length === 0) {
+            console.log('⚠️ No topics found for this thesis');
+            return res.json([]);
+        }
+        
+        console.log(`📊 Current thesis topics:`, currentTopics.rows.map(t => t.topic_name));
+        
+        // Step 2: Extract topic names for the query
+        const topicNames = currentTopics.rows.map(t => t.topic_name);
+        
+        // Step 3: Build dynamic WHERE clause for topics
+        // This creates: (LOWER(t.topic_name) LIKE LOWER($2) OR LOWER(t.topic_name) LIKE LOWER($3) OR ...)
+        const topicConditions = topicNames.map((_, index) => 
+            `LOWER(t.topic_name) LIKE LOWER($${index + 2})`
+        ).join(' OR ');
+        
+        // Step 4: Find other theses that share these topics
+        const similarTheses = await pool.query(
+            `SELECT 
+                p.id,
+                p.title,
+                p.cluster,
+                p.uploaded_at,
+                array_agg(DISTINCT t.topic_name) as matching_topics,
+                COUNT(DISTINCT t.topic_name) as topic_match_count,
+                SUM(t.topic_weight) as relevance_score
+             FROM pdfs p
+             JOIN thesis_topics t ON p.id = t.pdf_id
+             WHERE p.id != $1
+               AND p.is_private = false
+               AND (${topicConditions})
+             GROUP BY p.id, p.title, p.cluster, p.uploaded_at
+             ORDER BY topic_match_count DESC, relevance_score DESC, p.uploaded_at DESC
+             LIMIT $${topicNames.length + 2}`,
+            [pdfId, ...topicNames.map(t => `%${t}%`), limit]
+        );
+        
+        console.log(`✅ Found ${similarTheses.rows.length} similar theses`);
+        
+        // Step 5: Format the results with cluster names
+        const clusterNames = ['BSCS', 'BSED-MATH', 'BSES', 'BSHM', 'BTLED-HE', 'BEED'];
+        const formattedResults = similarTheses.rows.map(row => ({
+            ...row,
+            course: clusterNames[row.cluster] || 'Unknown',
+            matching_topics: row.matching_topics || []
+        }));
+        
+        res.json(formattedResults);
+        
+    } catch (err) {
+        console.error('❌ Error finding similar theses:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
 /* ================= ADMIN DASHBOARD ================= */
 app.get('/admin', requireLogin, isAdmin, async (req,res)=>{
   const pdfsResult = await pool.query('SELECT * FROM pdfs ORDER BY id DESC');
@@ -338,7 +416,6 @@ app.get('/admin', requireLogin, isAdmin, async (req,res)=>{
 
 /* ================= UPLOAD ================= */
 /* ================= RENDER ML API CONFIG ================= */
-// ⬇️⬇️⬇️ UPDATE THIS WITH YOUR ACTUAL ML API URL ⬇️⬇️⬇️
 const ML_API_URL = 'https://digilib-api-ml.onrender.com'; // Remove '/predict' from the end
 
 /* ================= UPLOAD WITH ML API (COURSE + TOPICS) ================= */
