@@ -634,7 +634,7 @@ app.post('/update-course/:id', requireLogin, isAdmin, async (req, res) => {
 });
 
 /* ================= USER SEARCH ================= */
-/* ================= ENHANCED USER SEARCH (Title + Topics) ================= */
+/* ================= FIXED SEARCH ROUTE (Title + Topics) ================= */
 app.get('/search', requireLogin, async (req, res) => {
   try {
     const searchQuery = req.query.q;
@@ -645,26 +645,17 @@ app.get('/search', requireLogin, async (req, res) => {
     
     console.log(`🔍 Searching for: "${searchQuery}"`);
     
-    // Enhanced query that searches both title AND topics
+    // SIMPLE AND WORKING QUERY
     const result = await pool.query(
-      `SELECT DISTINCT p.*, 
-              array_agg(DISTINCT t.topic_name) FILTER (WHERE t.topic_name IS NOT NULL) as topic_list
+      `SELECT DISTINCT p.*
        FROM pdfs p
        LEFT JOIN thesis_topics t ON p.id = t.pdf_id
        WHERE p.is_private = false
-         AND (
-           p.title ILIKE $1 
-           OR t.topic_name ILIKE $1
-           OR EXISTS (
-             SELECT 1 FROM thesis_topics t2 
-             WHERE t2.pdf_id = p.id AND t2.topic_name ILIKE $1
-           )
-         )
-       GROUP BY p.id
+         AND (p.title ILIKE $1 OR t.topic_name ILIKE $1)
        ORDER BY 
          CASE 
-           WHEN p.title ILIKE $1 THEN 1  -- Title matches first
-           ELSE 2                          -- Topic matches second
+           WHEN p.title ILIKE $1 THEN 1
+           ELSE 2
          END,
          p.id DESC`,
       [`%${searchQuery}%`]
@@ -672,13 +663,31 @@ app.get('/search', requireLogin, async (req, res) => {
     
     console.log(`✅ Found ${result.rows.length} results for: "${searchQuery}"`);
     
-    // Format results with topics array
-    const pdfs = result.rows.map(row => ({
-      ...row,
-      topics: row.topic_list || []
-    }));
+    // Now get topics for each result
+    const pdfs = [];
     
-    // ==== LOG SEARCH HISTORY ====
+    for (const row of result.rows) {
+      // Get topics for this PDF
+      const topicsResult = await pool.query(
+        `SELECT topic_name FROM thesis_topics WHERE pdf_id = $1 ORDER BY topic_weight DESC`,
+        [row.id]
+      );
+      
+      const topics = topicsResult.rows.map(t => t.topic_name);
+      
+      pdfs.push({
+        id: row.id,
+        title: row.title,
+        cluster: row.cluster,
+        is_private: row.is_private,
+        uploader: row.uploader,
+        uploaded_at: row.uploaded_at,
+        url: row.url,
+        topics: topics
+      });
+    }
+    
+    // Log search history
     await pool.query(
       'INSERT INTO search_history(username, query) VALUES($1, $2)', 
       [req.session.user, searchQuery]
@@ -691,7 +700,8 @@ app.get('/search', requireLogin, async (req, res) => {
     
   } catch (err) {
     console.error('❌ Search error:', err);
-    res.status(500).send('Search failed');
+    console.error('Error details:', err.message);
+    res.status(500).send('Search failed: ' + err.message);
   }
 });
 //REQUEST USER DOWNLOAD
