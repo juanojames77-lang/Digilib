@@ -634,7 +634,7 @@ app.post('/update-course/:id', requireLogin, isAdmin, async (req, res) => {
 });
 
 /* ================= USER SEARCH ================= */
-a/* ================= ENHANCED USER SEARCH (Title + Topics) ================= */
+/* ================= ENHANCED USER SEARCH (Title + Topics) ================= */
 app.get('/search', requireLogin, async (req, res) => {
   try {
     const searchQuery = req.query.q;
