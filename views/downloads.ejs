@@ -787,13 +787,12 @@ td i {
           <i class="fas fa-clock"></i>
         </div>
         <div class="stat-info">
-          <h3>
+          <h3 id="lastDownloadDate">
             <% if (files.length > 0) { 
-              // Get the most recent download date and format it for Philippines
-              const latestDate = new Date(Math.max(...files.map(f => new Date(f.downloaded_at))));
-              // Add 8 hours for PH timezone
-              latestDate.setHours(latestDate.getHours() + 8);
-              // Format: "Mar 10, 2026"
+              // Get the most recent download date WITHOUT adding hours
+              // The database already has the correct Philippines time
+              const latestDate = new Date(files[0].downloaded_at);
+              // Format directly without adding hours
               const formattedLatest = latestDate.toLocaleDateString('en-PH', {
                 year: 'numeric',
                 month: 'short',
@@ -831,11 +830,13 @@ td i {
             </thead>
             <tbody>
               <% files.forEach(file => { 
-                // FIXED: Philippines Timezone (UTC+8)
+                // FIXED: The database already has correct Philippines time
+                // DO NOT add hours again!
                 const downloadDate = new Date(file.downloaded_at);
                 
-                // Add 8 hours for Philippines time (UTC+8)
-                downloadDate.setHours(downloadDate.getHours() + 8);
+                // Debug line to check the actual date
+                console.log('Raw date from DB:', file.downloaded_at);
+                console.log('Parsed date:', downloadDate.toString());
                 
                 // Format date: "March 10, 2026"
                 const formattedDate = downloadDate.toLocaleDateString('en-PH', {
@@ -844,14 +845,14 @@ td i {
                   day: 'numeric'
                 });
                 
-                // Format time: "2:30 PM"
+                // Format time: "6:56 PM"
                 const formattedTime = downloadDate.toLocaleTimeString('en-PH', {
                   hour: '2-digit',
                   minute: '2-digit',
                   hour12: true
                 });
                 
-                // Get day of week: "Monday"
+                // Get day of week: "Tuesday"
                 const dayOfWeek = downloadDate.toLocaleDateString('en-PH', {
                   weekday: 'long'
                 });
@@ -948,8 +949,10 @@ window.addEventListener('pageshow', function (event) {
   }
 });
 
-// Optional: Add a small note to show this page was updated
-console.log('📥 Downloads page loaded with Philippines timezone (UTC+8)');
+// Debug: Show current Philippines time for comparison
+const now = new Date();
+console.log('Current time (local):', now.toString());
+console.log('Current time (PH):', now.toLocaleString('en-PH', { timeZone: 'Asia/Manila' }));
 </script>
 
 </body>
