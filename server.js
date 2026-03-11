@@ -505,7 +505,6 @@ app.post('/upload', requireLogin, isAdmin, upload.single('pdf'), async (req, res
     if (mlResult && mlResult.success) {
       clusterIndex = mlResult.cluster || 0;
       confidence = mlResult.confidence || 0.5;
-      console.log(`✅ ML Prediction: Cluster ${clusterIndex}, Confidence ${confidence}`);
     }
 
     // 6. Validate ranges
